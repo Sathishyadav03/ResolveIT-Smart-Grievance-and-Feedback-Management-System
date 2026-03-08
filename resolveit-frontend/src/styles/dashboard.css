@@ -1,0 +1,109 @@
+.navbar{
+height:70px;
+background:#2f64d6;
+color:white;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:0 30px;
+}
+
+.profile{
+display:flex;
+align-items:center;
+gap:15px;
+}
+
+.profile button{
+padding:6px 12px;
+border:none;
+background:white;
+color:#2f64d6;
+border-radius:5px;
+cursor:pointer;
+}
+
+.layout{
+display:flex;
+height:calc(100vh - 70px);
+}
+
+.sidebar{
+width:220px;
+background:#08142b;
+color:white;
+padding:20px;
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+.sidebar a{
+color:white;
+text-decoration:none;
+}
+
+.content{
+flex:1;
+padding:40px;
+background:#f4f6fb;
+}
+
+.table{
+width:100%;
+background:white;
+border-collapse:collapse;
+}
+
+.table th,
+.table td{
+padding:12px;
+border:1px solid #ddd;
+}.table{
+
+width:100%;
+background:white;
+border-radius:8px;
+overflow:hidden;
+margin-top:20px;
+border-collapse:collapse;
+
+}
+
+.table th{
+
+background:#2f64d6;
+color:white;
+padding:12px;
+
+}
+
+.table td{
+
+padding:12px;
+border-bottom:1px solid #eee;
+
+}
+
+.table tr:hover{
+
+background:#f5f7ff;
+
+}
+.assign-btn{
+
+background:#2f64d6;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:5px;
+cursor:pointer;
+margin-left:10px;
+
+}
+
+.assign-btn:hover{
+
+background:#1e4fc4;
+
+}
