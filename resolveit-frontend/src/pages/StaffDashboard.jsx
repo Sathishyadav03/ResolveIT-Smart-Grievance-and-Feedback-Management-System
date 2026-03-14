@@ -1,40 +1,50 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
 import api from "../services/api"
-import "../styles/dashboard.css"
 
 export default function StaffDashboard(){
 
 const [complaints,setComplaints] = useState([])
 
+const navigate = useNavigate()
+
 useEffect(()=>{
-
-api.get("/complaints/all")
-.then(res => setComplaints(res.data))
-.catch(err => console.log(err))
-
+loadComplaints()
 },[])
 
-
-const updateStatus = async(id,status)=>{
+const loadComplaints = async () => {
 
 try{
 
-await api.post(`/complaints/update-status?complaintId=${id}&status=${status}`)
+const res = await api.get("/complaints/staff")
 
-alert("Status Updated")
-
-window.location.reload()
+setComplaints(res.data)
 
 }catch(err){
 
-alert("Error updating status")
+console.log("Failed to load complaints",err)
 
 }
 
 }
 
+const updateStatus = async (id,status) => {
+
+try{
+
+await api.put(`/complaints/update-status/${id}?status=${status}`)
+
+loadComplaints()
+
+}catch(err){
+
+console.log(err)
+
+}
+
+}
 
 return(
 
@@ -48,48 +58,97 @@ return(
 
 <div className="content">
 
-<h1>Staff Dashboard</h1>
+<h1 className="page-title">Staff Dashboard</h1>
 
-<h2>Assigned Complaints</h2>
+<div className="table-container">
 
 <table className="table">
 
 <thead>
 
 <tr>
+
 <th>ID</th>
 <th>Category</th>
 <th>Description</th>
 <th>Urgency</th>
 <th>Status</th>
-<th>Action</th>
+<th>Update</th>
+<th>View</th>
+
 </tr>
 
 </thead>
 
 <tbody>
 
+{complaints.length === 0 && (
+
+<tr>
+<td colSpan="7" style={{textAlign:"center"}}>
+No assigned complaints
+</td>
+</tr>
+
+)}
+
 {complaints.map(c => (
 
 <tr key={c.id}>
 
 <td>{c.id}</td>
+
 <td>{c.category}</td>
+
 <td>{c.description}</td>
-<td>{c.urgency}</td>
-<td>{c.status}</td>
+
+<td>
+
+<span className={`priority ${c.urgency}`}>
+{c.urgency}
+</span>
+
+</td>
+
+<td>
+
+<span className="status-badge">
+{c.statusType}
+</span>
+
+</td>
 
 <td>
 
 <select
 onChange={(e)=>updateStatus(c.id,e.target.value)}
+defaultValue=""
 >
 
-<option value="">Update</option>
-<option value="IN_PROGRESS">In Progress</option>
-<option value="RESOLVED">Resolved</option>
+<option value="" disabled>
+Update
+</option>
+
+<option value="IN_PROGRESS">
+In Progress
+</option>
+
+<option value="RESOLVED">
+Resolved
+</option>
 
 </select>
+
+</td>
+
+<td>
+
+<button
+className="assign-btn"
+onClick={()=>navigate(`/complaint/${c.id}`)}
+>
+View
+</button>
 
 </td>
 
@@ -100,6 +159,8 @@ onChange={(e)=>updateStatus(c.id,e.target.value)}
 </tbody>
 
 </table>
+
+</div>
 
 </div>
 

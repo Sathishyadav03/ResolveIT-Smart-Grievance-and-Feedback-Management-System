@@ -7,6 +7,8 @@ export default function Login(){
 
 const [email,setEmail] = useState("")
 const [password,setPassword] = useState("")
+const [loading,setLoading] = useState(false)
+
 const navigate = useNavigate()
 
 const handleLogin = async(e)=>{
@@ -15,22 +17,22 @@ e.preventDefault()
 
 try{
 
-const res = await api.post("/auth/login",{email,password})
+setLoading(true)
 
-const token = res.data.token
+const res = await api.post("/auth/login",{
+email,
+password
+})
 
-localStorage.setItem("token",token)
+/* SAVE TOKEN */
 
-const payload = JSON.parse(atob(token.split(".")[1]))
+localStorage.setItem("token", res.data.token)
+localStorage.setItem("role", res.data.role)
 
-const role = payload.role?.toUpperCase()
-
-console.log("ROLE:",role)
-
-if(role === "ADMIN"){
+if(res.data.role === "ADMIN"){
 navigate("/admin-dashboard")
 }
-else if(role === "STAFF"){
+else if(res.data.role === "STAFF"){
 navigate("/staff-dashboard")
 }
 else{
@@ -40,25 +42,47 @@ navigate("/customer-dashboard")
 }catch(err){
 
 console.error(err)
-alert("Login Failed")
+alert("Invalid email or password")
 
+}
+finally{
+setLoading(false)
 }
 
 }
 
 return(
 
-<div className="login-container">
+<div className="login-page">
+
+<div className="login-header">
+
+<div className="logo-title">
+
+<img
+src="/logo.png"
+alt="ResolveIT Logo"
+className="login-logo"
+/>
+
+<h1>ResolveIT</h1>
+
+</div>
+
+<p>Smart Complaint & Grievance Management System</p>
+
+</div>
 
 <div className="login-card">
 
-<h2>ResolveIT Login</h2>
+<h2>Login</h2>
 
 <form onSubmit={handleLogin}>
 
 <input
 type="email"
-placeholder="Email"
+placeholder="Email Address"
+value={email}
 onChange={(e)=>setEmail(e.target.value)}
 required
 />
@@ -66,19 +90,22 @@ required
 <input
 type="password"
 placeholder="Password"
+value={password}
 onChange={(e)=>setPassword(e.target.value)}
 required
 />
 
-<button type="submit">Login</button>
+<button type="submit" disabled={loading}>
+
+{loading ? "Logging in..." : "Login"}
+
+</button>
 
 </form>
 
-<p style={{marginTop:"15px"}}>
-
+<p className="register-text">
 Don't have an account?
 <a href="/register"> Register</a>
-
 </p>
 
 </div>

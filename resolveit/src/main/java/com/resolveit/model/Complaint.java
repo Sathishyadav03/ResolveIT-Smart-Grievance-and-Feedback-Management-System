@@ -2,19 +2,31 @@ package com.resolveit.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "complaints")
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "complaints")
+
 public class Complaint {
 
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
 private Long id;
+
+/* USER DETAILS */
+
+private boolean anonymous;
+
+@Column(name="user_id")
+private Long userId;
+
+/* COMPLAINT DETAILS */
 
 private String category;
 
@@ -23,19 +35,29 @@ private String description;
 
 private String urgency;
 
-private String status = "NEW";
+/* STATUS */
 
-private boolean anonymous;
+@Column(name="status_type")
+private String statusType;
 
-@ManyToOne
-@JoinColumn(name = "user_id", nullable = true)
-private User user;
+/* STAFF ASSIGNMENT */
 
+@Column(name="assigned_staff_id")
 private Long assignedStaffId;
 
-@Column(length = 500)
+/* STAFF NAME (NOT STORED IN DB) */
+
+@Transient
+private String assignedStaffName;
+
+/* FILE ATTACHMENT */
+
+@Column(name="attachment")
 private String attachment;
 
-private LocalDateTime createdAt = LocalDateTime.now();
+/* CREATED TIME */
+
+@Column(name="created_at")
+private LocalDateTime createdAt;
 
 }

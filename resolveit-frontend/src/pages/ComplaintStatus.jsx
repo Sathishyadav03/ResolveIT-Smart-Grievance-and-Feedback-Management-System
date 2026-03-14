@@ -1,51 +1,102 @@
 import { useEffect,useState } from "react"
 import api from "../services/api"
-import "../styles/dashboard.css"
+import ComplaintCard from "../components/ComplaintCard"
+import Timeline from "../components/Timeline"
+import StatusTracker from "../components/StatusTracker"
 
 export default function ComplaintStatus(){
 
-const [complaints,setComplaints]=useState([])
+const [complaints,setComplaints] = useState([])
+const [selectedComplaint,setSelectedComplaint] = useState(null)
+const [comments,setComments] = useState([])
 
 useEffect(()=>{
-
-api.get("/complaints/all")
-.then(res=>setComplaints(res.data))
-
+loadComplaints()
 },[])
+
+const loadComplaints = async ()=>{
+
+try{
+
+const res = await api.get("/complaints/my")
+
+setComplaints(res.data)
+
+}catch(err){
+
+console.log(err)
+
+}
+
+}
+
+const openComplaint = async (complaint)=>{
+
+setSelectedComplaint(complaint)
+
+try{
+
+const res = await api.get(`/comments/${complaint.id}`)
+
+setComments(res.data)
+
+}catch(err){
+
+console.log(err)
+
+}
+
+}
 
 return(
 
 <div>
 
-<h2>Complaint Status</h2>
+<h2 style={{marginBottom:"20px"}}>Complaint Status</h2>
 
-<table className="table">
+<div className="complaints-list">
 
-<thead>
+{complaints.map(c => (
 
-<tr>
-<th>ID</th>
-<th>Category</th>
-<th>Status</th>
-<th>Urgency</th>
-</tr>
+<ComplaintCard
+key={c.id}
+complaint={c}
+onClick={()=>openComplaint(c)}
+/>
 
-</thead>
-
-<tbody>
-
-{complaints.map(c=>(
-<tr key={c.id}>
-<td>{c.id}</td>
-<td>{c.category}</td>
-<td>{c.status}</td>
-<td>{c.urgency}</td>
-</tr>
 ))}
 
-</tbody>
+</div>
 
-</table>
+{selectedComplaint && (
+
+<div style={{marginTop:"40px"}}>
+
+<h3>Complaint #{selectedComplaint.id}</h3>
+
+<p><b>Category:</b> {selectedComplaint.category}</p>
+
+<p><b>Description:</b> {selectedComplaint.description}</p>
+
+<p>
+
+<b>Status:</b> {selectedComplaint.statusType}
+
+{selectedComplaint.assignedStaffName && (
+<span style={{marginLeft:"6px"}}>
+→ {selectedComplaint.assignedStaffName}
+</span>
+)}
+
+</p>
+
+<StatusTracker status={selectedComplaint.statusType}/>
+
+<Timeline comments={comments}/>
+
+</div>
+
+)}
 
 </div>
 

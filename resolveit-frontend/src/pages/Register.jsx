@@ -8,7 +8,6 @@ export default function Register(){
 const [name,setName] = useState("")
 const [email,setEmail] = useState("")
 const [password,setPassword] = useState("")
-const [role,setRole] = useState("CUSTOMER")
 
 const navigate = useNavigate()
 
@@ -21,8 +20,7 @@ try{
 await api.post("/auth/register",{
 name,
 email,
-password,
-role
+password
 })
 
 alert("Registration Successful")
@@ -31,6 +29,7 @@ navigate("/")
 
 }catch(err){
 
+console.error(err)
 alert("Registration Failed")
 
 }
@@ -39,7 +38,23 @@ alert("Registration Failed")
 
 return(
 
-<div className="login-container">
+<div className="login-page">
+
+{/* HEADER */}
+
+<div className="login-header">
+
+<img
+src="/logo.png"
+alt="ResolveIT Logo"
+className="login-logo"
+/>
+<p>Create your account</p>
+
+</div>
+
+
+{/* REGISTER CARD */}
 
 <div className="login-card">
 
@@ -48,32 +63,43 @@ return(
 <form onSubmit={handleRegister}>
 
 <input
-placeholder="Name"
+type="text"
+placeholder="Full Name"
+value={name}
 onChange={(e)=>setName(e.target.value)}
+required
 />
 
 <input
 type="email"
-placeholder="Email"
+placeholder="Email Address"
+value={email}
 onChange={(e)=>setEmail(e.target.value)}
+required
 />
 
 <input
 type="password"
 placeholder="Password"
+value={password}
 onChange={(e)=>setPassword(e.target.value)}
+required
 />
 
-<select onChange={(e)=>setRole(e.target.value)}>
+<button type="submit">
 
-<option value="CUSTOMER">Customer</option>
-<option value="STAFF">Staff</option>
+Register
 
-</select>
-
-<button type="submit">Register</button>
+</button>
 
 </form>
+
+<p className="register-text">
+
+Already have an account?  
+<a href="/"> Login</a>
+
+</p>
 
 </div>
 

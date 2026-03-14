@@ -1,45 +1,114 @@
 import { useEffect, useState } from "react"
 import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
+import ComplaintCard from "../components/ComplaintCard"
+import ComplaintChart from "../components/ComplaintChart"
 import api from "../services/api"
-import "../styles/dashboard.css"
+import { FaFolderOpen, FaSpinner, FaCheckCircle } from "react-icons/fa"
 
 export default function AdminDashboard(){
 
 const [complaints,setComplaints] = useState([])
-const [staffId,setStaffId] = useState("")
+const [staffInputs,setStaffInputs] = useState({})
 
 useEffect(()=>{
 
-api.get("/complaints/all")
-.then(res => setComplaints(res.data))
-.catch(err => console.log(err))
+loadComplaints()
 
 },[])
 
+/* LOAD COMPLAINTS */
 
-const assignComplaint = async(id)=>{
+const loadComplaints = async ()=>{
+
+try{
+
+const res = await api.get("/complaints/all")
+
+setComplaints(res.data)
+
+}catch(err){
+
+console.log("Failed to load complaints",err)
+
+}
+
+}
+
+/* HANDLE STAFF INPUT */
+
+const handleStaffChange = (complaintId,value) =>{
+
+setStaffInputs({
+
+...staffInputs,
+
+[complaintId]:value
+
+})
+
+}
+
+/* ASSIGN STAFF */
+
+const assignComplaint = async (complaintId)=>{
+
+const staffId = staffInputs[complaintId]
 
 if(!staffId){
+
 alert("Enter Staff ID")
+
 return
+
 }
 
 try{
 
-await api.post(`/complaints/assign?complaintId=${id}&staffId=${staffId}`)
+await api.post(`/complaints/assign?complaintId=${complaintId}&staffId=${staffId}`)
 
-alert("Complaint Assigned")
+alert("Staff Assigned Successfully")
 
-window.location.reload()
+loadComplaints()
 
 }catch(err){
 
-alert("Assignment Failed")
+console.log(err)
+
+alert("Failed to assign staff")
 
 }
 
 }
+
+
+/* STATISTICS */
+
+const openCount = complaints.filter(
+c => c.statusType === "OPEN"
+).length
+
+const progressCount = complaints.filter(
+c => c.statusType === "IN_PROGRESS" || c.statusType === "ASSIGNED"
+).length
+
+const resolvedCount = complaints.filter(
+c => c.statusType === "RESOLVED"
+).length
+
+
+const chartData = [
+
+{ name:"OPEN", value:openCount },
+{ name:"IN_PROGRESS", value:progressCount },
+{ name:"RESOLVED", value:resolvedCount }
+
+]
+
+/* RECENT ACTIVITY */
+
+const recentActivity = complaints.slice(0,5)
+
 
 return(
 
@@ -53,43 +122,113 @@ return(
 
 <div className="content">
 
-<h1>Admin Dashboard</h1>
+<h1 className="page-title">Admin Dashboard</h1>
 
-<h2>All Complaints</h2>
 
-<table className="table">
+{/* STATISTICS */}
 
-<thead>
+<div className="stats-grid">
 
-<tr>
-<th>ID</th>
-<th>Category</th>
-<th>Description</th>
-<th>Urgency</th>
-<th>Status</th>
-<th>Assign Staff</th>
-</tr>
+<div className="stat-card open">
 
-</thead>
+<div className="stat-icon">
+<FaFolderOpen/>
+</div>
 
-<tbody>
+<h3>Total Complaints</h3>
 
-{complaints.map(c => (
+<p>{complaints.length}</p>
 
-<tr key={c.id}>
+</div>
 
-<td>{c.id}</td>
-<td>{c.category}</td>
-<td>{c.description}</td>
-<td>{c.urgency}</td>
-<td>{c.status}</td>
 
-<td>
+<div className="stat-card progress">
+
+<div className="stat-icon">
+<FaSpinner/>
+</div>
+
+<h3>In Progress</h3>
+
+<p>{progressCount}</p>
+
+</div>
+
+
+<div className="stat-card resolved">
+
+<div className="stat-icon">
+<FaCheckCircle/>
+</div>
+
+<h3>Resolved</h3>
+
+<p>{resolvedCount}</p>
+
+</div>
+
+</div>
+
+
+{/* ANALYTICS + ACTIVITY */}
+
+<div className="dashboard-grid">
+
+<div className="chart-section">
+
+<h2>Complaint Analytics</h2>
+
+<ComplaintChart data={chartData}/>
+
+</div>
+
+
+<div className="activity-panel">
+
+<h2>Recent Activity</h2>
+
+{recentActivity.map(c => (
+
+<div key={c.id} className="activity-item">
+
+<div className="activity-dot"></div>
+
+<div>
+
+<b>Complaint #{c.id}</b>
+
+<p>{c.category}</p>
+
+<small>Status: {c.statusType}</small>
+
+</div>
+
+</div>
+
+))}
+
+</div>
+
+</div>
+
+
+{/* COMPLAINT LIST */}
+
+<h2 style={{marginTop:"30px"}}>All Complaints</h2>
+
+{complaints.map(c =>(
+
+<div key={c.id}>
+
+<ComplaintCard complaint={c}/>
+
+<div className="assign-container">
 
 <input
 type="number"
-placeholder="Staff ID"
-onChange={(e)=>setStaffId(e.target.value)}
+placeholder="Enter Staff ID"
+value={staffInputs[c.id] || ""}
+onChange={(e)=>handleStaffChange(c.id,e.target.value)}
 />
 
 <button
@@ -97,19 +236,15 @@ className="assign-btn"
 onClick={()=>assignComplaint(c.id)}
 >
 
-Assign
+Assign Staff
 
 </button>
 
-</td>
+</div>
 
-</tr>
+</div>
 
 ))}
-
-</tbody>
-
-</table>
 
 </div>
 

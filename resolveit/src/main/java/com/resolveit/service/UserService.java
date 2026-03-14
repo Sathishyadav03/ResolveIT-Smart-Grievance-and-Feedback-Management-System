@@ -1,35 +1,50 @@
 package com.resolveit.service;
 
-import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
-import com.resolveit.repository.UserRepository;
 import com.resolveit.model.User;
+import com.resolveit.repository.UserRepository;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
+
 public class UserService {
 
-private final UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-public User register(User user) {
+    /* REGISTER USER */
 
-if(user.getRole() == null){
-user.setRole("CUSTOMER");
-}
+    public User register(User user) {
 
-return userRepository.save(user);
-}
+        if(userRepository.findByEmail(user.getEmail()).isPresent()){
+            throw new RuntimeException("Email already exists");
+        }
 
-public User login(String email, String password) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-User user = userRepository.findByEmail(email)
-.orElseThrow(() -> new RuntimeException("User not found"));
+        if(user.getRole()==null){
+            user.setRole("CUSTOMER");
+        }
 
-if(!user.getPassword().equals(password)){
-throw new RuntimeException("Invalid password");
-}
+        return userRepository.save(user);
+    }
 
-return user;
-}
+    /* LOGIN USER */
+
+    public User login(String email,String password){
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if(!passwordEncoder.matches(password,user.getPassword())){
+            throw new RuntimeException("Invalid password");
+        }
+
+        return user;
+    }
+
 }

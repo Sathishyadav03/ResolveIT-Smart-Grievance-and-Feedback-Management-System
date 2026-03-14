@@ -1,36 +1,57 @@
-import { Link } from "react-router-dom"
-import "../styles/dashboard.css"
+import { NavLink } from "react-router-dom"
 
 export default function Sidebar({ role }) {
 
-return(
+return (
 
 <div className="sidebar">
 
-<h3>ResolveIT</h3>
+<div className="sidebar-logo">
+<h2>ResolveIT</h2>
+<p>Complaint System</p>
+</div>
 
-{role==="CUSTOMER" && (
+<nav className="sidebar-links">
+
+{role === "CUSTOMER" && (
+
 <>
-<Link to="/customer-dashboard">Dashboard</Link>
-<Link to="/customer-dashboard/submit-complaint">Submit Complaint</Link>
-<Link to="/customer-dashboard/complaint-status">Complaint Status</Link>
+<NavLink to="/customer-dashboard" end className="sidebar-link">
+🏠 Dashboard
+</NavLink>
+
+<NavLink to="/customer-dashboard/submit-complaint" className="sidebar-link">
+📝 Submit Complaint
+</NavLink>
+
+<NavLink to="/customer-dashboard/complaint-status" className="sidebar-link">
+📊 Complaint Status
+</NavLink>
 </>
+
 )}
 
-{role==="STAFF" && (
+{role === "STAFF" && (
+
 <>
-<Link to="/staff-dashboard">Dashboard</Link>
-<Link to="/staff-dashboard/assigned-complaints">Assigned Complaints</Link>
+<NavLink to="/staff-dashboard" className="sidebar-link">
+🛠 Staff Dashboard
+</NavLink>
 </>
+
 )}
 
-{role==="ADMIN" && (
+{role === "ADMIN" && (
+
 <>
-<Link to="/admin-dashboard">Dashboard</Link>
-<Link to="/admin-dashboard/all-complaints">All Complaints</Link>
-<Link to="/admin-dashboard/assign-complaints">Assign Complaints</Link>
+<NavLink to="/admin-dashboard" className="sidebar-link">
+⚙ Admin Dashboard
+</NavLink>
 </>
+
 )}
+
+</nav>
 
 </div>
 

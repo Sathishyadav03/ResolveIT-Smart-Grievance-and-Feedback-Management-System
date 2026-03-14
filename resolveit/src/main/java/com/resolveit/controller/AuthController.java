@@ -12,27 +12,42 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
+
 public class AuthController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    /* REGISTER */
+
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
+    public User register(@RequestBody User user){
+
+        user.setRole("CUSTOMER");
+
         return userService.register(user);
     }
 
+    /* LOGIN */
+
     @PostMapping("/login")
-    public Map<String,String> login(@RequestBody User loginRequest) {
+    public Map<String,String> login(@RequestBody User loginRequest){
 
         User user = userService.login(
                 loginRequest.getEmail(),
                 loginRequest.getPassword()
         );
 
-        String token = jwtUtil.generateToken(user.getId(), user.getRole());
+        String token = jwtUtil.generateToken(
+                user.getId(),
+                user.getRole()
+        );
 
-        return Map.of("token", token);
+        return Map.of(
+                "token",token,
+                "role",user.getRole()
+        );
     }
+
 }

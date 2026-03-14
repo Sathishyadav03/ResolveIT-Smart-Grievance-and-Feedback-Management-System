@@ -1,39 +1,45 @@
 import { useState } from "react"
 import api from "../services/api"
-import "../styles/form.css"
 
 export default function SubmitComplaint(){
 
-const [category,setCategory]=useState("")
-const [description,setDescription]=useState("")
-const [urgency,setUrgency]=useState("LOW")
-const [anonymous,setAnonymous]=useState(false)
+const [category,setCategory] = useState("")
+const [description,setDescription] = useState("")
+const [urgency,setUrgency] = useState("LOW")
+const [anonymous,setAnonymous] = useState("false")
+const [file,setFile] = useState(null)
 
-const handleSubmit = async(e)=>{
+const handleSubmit = async (e) => {
 
 e.preventDefault()
 
 try{
 
-const token = localStorage.getItem("token")
-const payload = JSON.parse(atob(token.split(".")[1]))
+const formData = new FormData()
 
-const userId = payload.sub
+formData.append("category",category)
+formData.append("description",description)
+formData.append("urgency",urgency)
+formData.append("anonymous",anonymous)
 
-await api.post(`/complaints/submit?userId=${userId}`,{
+if(file){
+formData.append("file",file)
+}
 
-category,
-description,
-urgency,
-anonymous
+await api.post("/complaints/submit",formData)
 
-})
+alert("Complaint submitted successfully")
 
-alert("Complaint Submitted Successfully")
+setCategory("")
+setDescription("")
+setUrgency("LOW")
+setAnonymous("false")
+setFile(null)
 
 }catch(err){
 
-alert("Error submitting complaint")
+console.log(err)
+alert("Failed to submit complaint")
 
 }
 
@@ -41,28 +47,40 @@ alert("Error submitting complaint")
 
 return(
 
-<div className="form-container">
+<div className="content">
 
-<h2>Submit Complaint</h2>
+<h1 className="page-title">Submit Complaint</h1>
+
+<div className="form-container">
 
 <form onSubmit={handleSubmit}>
 
-<label>Complaint Type</label>
+<label>Category</label>
 
-<select onChange={(e)=>setAnonymous(e.target.value==="ANONYMOUS")}>
-
-<option value="PUBLIC">Public</option>
-<option value="ANONYMOUS">Anonymous</option>
-
-</select>
-
-<input
-placeholder="Category"
+<textarea
+rows="3"
+placeholder="Enter complaint category..."
+value={category}
 onChange={(e)=>setCategory(e.target.value)}
 required
 />
 
-<select onChange={(e)=>setUrgency(e.target.value)}>
+<label>Description</label>
+
+<textarea
+rows="4"
+placeholder="Describe your complaint..."
+value={description}
+onChange={(e)=>setDescription(e.target.value)}
+required
+/>
+
+<label>Urgency</label>
+
+<select
+value={urgency}
+onChange={(e)=>setUrgency(e.target.value)}
+>
 
 <option value="LOW">Low</option>
 <option value="MEDIUM">Medium</option>
@@ -70,15 +88,32 @@ required
 
 </select>
 
-<textarea
-placeholder="Describe complaint"
-onChange={(e)=>setDescription(e.target.value)}
-required
+<label>Attachment</label>
+
+<input
+type="file"
+onChange={(e)=>setFile(e.target.files[0])}
 />
 
-<button type="submit">Submit</button>
+<label>Visibility</label>
+
+<select
+value={anonymous}
+onChange={(e)=>setAnonymous(e.target.value)}
+>
+
+<option value="false">Public</option>
+<option value="true">Anonymous</option>
+
+</select>
+
+<button type="submit">
+Submit Complaint
+</button>
 
 </form>
+
+</div>
 
 </div>
 
