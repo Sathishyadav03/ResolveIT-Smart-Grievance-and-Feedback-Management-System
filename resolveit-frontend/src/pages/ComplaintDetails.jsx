@@ -16,91 +16,76 @@ const [description,setDescription] = useState("")
 const [status,setStatus] = useState("")
 
 useEffect(()=>{
-
 loadComplaint()
 loadComments()
-
 },[id])
 
+useEffect(()=>{
+if(complaint){
+setStatus(complaint.statusType)
+}
+},[complaint])
 
 const loadComplaint = async () => {
 
 try{
 
 const res = await api.get(`/complaints/${id}`)
-
 setComplaint(res.data)
 
 }catch(err){
-
 console.log("Failed to load complaint",err)
-
 }
 
 }
-
 
 const loadComments = async () => {
 
 try{
 
 const res = await api.get(`/comments/${id}`)
-
 setComments(res.data)
 
 }catch(err){
-
 console.log("Failed to load comments",err)
-
 }
 
 }
 
-
-const addUpdate = async ()=>{
+const addUpdate = async () => {
 
 if(!status || !description){
-
 alert("Please fill all fields")
-
 return
-
 }
 
 try{
 
 await api.post("/comments/add",{
-
-complaintsId:id,
-description:description,
-statusType:status
-
+complaintsId: id,
+description: description,
+statusType: status
 })
 
 alert("Update Added Successfully")
 
 setDescription("")
-setStatus("")
 
-loadComments()
+await loadComments()
+await loadComplaint()
 
 }catch(err){
 
 console.log(err)
-
 alert("Failed to add update")
 
 }
 
 }
 
-
 if(!complaint){
-
 return <p style={{padding:"40px"}}>Loading complaint...</p>
-
 }
-
 
 return(
 
@@ -114,21 +99,44 @@ return(
 
 <div className="content">
 
-<h2>Complaint Details</h2>
+<h2 className="page-title">Complaint Details</h2>
 
-<div className="complaint-card">
+{/* COMPLAINT HEADER */}
+
+<div className="complaint-details-card">
+
+<div className="complaint-header">
+
+<div>
 
 <h3>{complaint.category}</h3>
-
 <p>{complaint.description}</p>
+
+</div>
+
+<div className="complaint-meta">
+
+<span className={`status ${complaint.statusType}`}>
+{complaint.statusType}
+</span>
+
+<span className={`urgency ${complaint.urgency}`}>
+{complaint.urgency}
+</span>
+
+<span className="created-date">
+{new Date(complaint.createdAt).toLocaleDateString()}
+</span>
+
+</div>
+
+</div>
 
 {complaint.attachment && (
 
-<div style={{marginTop:"10px"}}>
+<div className="attachment-box">
 
 <b>Attachment:</b>
-
-<br/>
 
 <a
 href={`http://localhost:8080/uploads/${complaint.attachment}`}
@@ -144,17 +152,49 @@ View Attachment
 
 )}
 
-<p><b>Status:</b> {complaint.statusType}</p>
-
-<p><b>Urgency:</b> {complaint.urgency}</p>
-
-<p><b>Created At:</b> {new Date(complaint.createdAt).toLocaleDateString()}</p>
-
 </div>
+
+{/* STATUS TRACKER */}
 
 <StatusTracker status={complaint.statusType}/>
 
+{/* TIMELINE */}
+
 <Timeline comments={comments}/>
+
+{/* UPDATE SECTION */}
+
+<div className="updates-layout">
+
+<div className="updates-history">
+
+<h3>Complaint Updates</h3>
+
+{comments.length === 0 ? (
+
+<p className="empty-updates">
+No updates yet
+</p>
+
+):(comments.map(c => (
+
+<div key={c.commentId} className="update-card">
+
+<div className="update-status">
+{c.statusType}
+</div>
+
+<p>{c.description}</p>
+
+<span>{c.date}</span>
+
+</div>
+
+)))}
+
+</div>
+
+{/* ADD UPDATE FORM */}
 
 <div className="form-container">
 
@@ -186,6 +226,8 @@ onChange={(e)=>setDescription(e.target.value)}
 <button onClick={addUpdate}>
 Add Update
 </button>
+
+</div>
 
 </div>
 

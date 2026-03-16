@@ -1,3 +1,4 @@
+
 package com.resolveit.model;
 
 import jakarta.persistence.*;

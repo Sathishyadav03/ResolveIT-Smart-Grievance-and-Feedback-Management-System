@@ -1,3 +1,4 @@
+
 package com.resolveit.service;
 
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,8 @@ import com.resolveit.model.User;
 import com.resolveit.repository.UserRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +29,7 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        if(user.getRole()==null){
+        if(user.getRole() == null){
             user.setRole("CUSTOMER");
         }
 
@@ -47,4 +50,21 @@ public class UserService {
         return user;
     }
 
+    /* GET ALL STAFF */
+
+    public List<User> getAllStaff(){
+
+        return userRepository.findByRole("STAFF");
+
+    }
+
+    /* GET ALL USERS (optional admin feature) */
+
+    public List<User> getAllUsers(){
+
+        return userRepository.findAll();
+
+    }
+
 }
+

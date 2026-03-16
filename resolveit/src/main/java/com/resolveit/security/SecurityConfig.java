@@ -1,3 +1,4 @@
+
 package com.resolveit.security;
 
 import org.springframework.context.annotation.Bean;
@@ -42,18 +43,18 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ⭐ allow preflight
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/files/**").permitAll()
                     .requestMatchers("/uploads/**").permitAll()
                     .anyRequest().authenticated()
             )
 
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            );
+            )
+
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -63,23 +64,28 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5173",
-                "http://localhost:5174"
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*"
         ));
 
         configuration.setAllowedMethods(Arrays.asList(
-                "GET","POST","PUT","DELETE","OPTIONS"
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"
         ));
 
         configuration.setAllowedHeaders(Arrays.asList("*"));
 
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
     }
 }
+

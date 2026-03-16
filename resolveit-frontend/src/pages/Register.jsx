@@ -1,105 +1,92 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+
+import { useEffect,useState } from "react"
+import Navbar from "../components/Navbar"
+import Sidebar from "../components/Sidebar"
 import api from "../services/api"
-import "../styles/login.css"
+import { Pie } from "react-chartjs-2"
 
-export default function Register(){
+export default function Reports(){
 
-const [name,setName] = useState("")
-const [email,setEmail] = useState("")
-const [password,setPassword] = useState("")
+const [complaints,setComplaints] = useState([])
 
-const navigate = useNavigate()
+useEffect(()=>{
+loadComplaints()
+},[])
 
-const handleRegister = async(e)=>{
+const loadComplaints = async ()=>{
 
-e.preventDefault()
+const res = await api.get("/complaints/all")
 
-try{
-
-await api.post("/auth/register",{
-name,
-email,
-password
-})
-
-alert("Registration Successful")
-
-navigate("/")
-
-}catch(err){
-
-console.error(err)
-alert("Registration Failed")
+setComplaints(res.data)
 
 }
 
+/* CALCULATE STATS */
+
+const total = complaints.length
+const open = complaints.filter(c=>c.statusType==="OPEN").length
+const assigned = complaints.filter(c=>c.statusType==="ASSIGNED").length
+const resolved = complaints.filter(c=>c.statusType==="RESOLVED").length
+
+const data={
+labels:["OPEN","ASSIGNED","RESOLVED"],
+datasets:[
+{
+data:[open,assigned,resolved],
+backgroundColor:["#3b82f6","#f59e0b","#10b981"]
+}
+]
 }
 
 return(
 
-<div className="login-page">
+<div>
 
-{/* HEADER */}
+<Navbar/>
 
-<div className="login-header">
+<div className="layout">
 
-<img
-src="/logo.png"
-alt="ResolveIT Logo"
-className="login-logo"
-/>
-<p>Create your account</p>
+<Sidebar role="ADMIN"/>
+
+<div className="content">
+
+<h1 className="page-title">Reports & Analytics</h1>
+
+{/* STAT CARDS */}
+
+<div className="stats-grid">
+
+<div className="stat-card">
+<h3>Total Complaints</h3>
+<p>{total}</p>
+</div>
+
+<div className="stat-card open">
+<h3>Open</h3>
+<p>{open}</p>
+</div>
+
+<div className="stat-card progress">
+<h3>Assigned</h3>
+<p>{assigned}</p>
+</div>
+
+<div className="stat-card resolved">
+<h3>Resolved</h3>
+<p>{resolved}</p>
+</div>
 
 </div>
 
+{/* PIE CHART */}
 
-{/* REGISTER CARD */}
+<div className="chart-section">
 
-<div className="login-card">
+<Pie data={data}/>
 
-<h2>Register</h2>
+</div>
 
-<form onSubmit={handleRegister}>
-
-<input
-type="text"
-placeholder="Full Name"
-value={name}
-onChange={(e)=>setName(e.target.value)}
-required
-/>
-
-<input
-type="email"
-placeholder="Email Address"
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-required
-/>
-
-<input
-type="password"
-placeholder="Password"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-required
-/>
-
-<button type="submit">
-
-Register
-
-</button>
-
-</form>
-
-<p className="register-text">
-
-Already have an account?  
-<a href="/"> Login</a>
-
-</p>
+</div>
 
 </div>
 
@@ -108,3 +95,4 @@ Already have an account?
 )
 
 }
+

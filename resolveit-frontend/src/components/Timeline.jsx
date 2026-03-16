@@ -1,18 +1,19 @@
 export default function Timeline({ comments }) {
 
-return(
+return (
 
 <div className="timeline">
 
 <h3>Complaint Updates</h3>
 
-{comments.length === 0 && (
-<p style={{marginTop:"10px"}}>No updates yet</p>
+{(!comments || comments.length === 0) && (
+
+<p style={{ marginTop: "10px" }}>No updates yet</p>
 )}
 
-{comments.map((c)=>(
+{comments?.map((c, index) => (
 
-<div key={c.comment_id} className="timeline-item">
+<div key={c.comment_id || index} className="timeline-item">
 
 <div className="timeline-dot"></div>
 

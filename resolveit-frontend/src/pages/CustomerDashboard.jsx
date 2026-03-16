@@ -15,6 +15,8 @@ useEffect(()=>{
 loadComplaints()
 },[])
 
+/* LOAD USER COMPLAINTS */
+
 const loadComplaints = async () => {
 
 try{
@@ -35,10 +37,14 @@ setLoading(false)
 
 }
 
-const open = complaints.filter(c => c.statusType === "OPEN").length
+/* STATUS COUNTS */
 
-const progress = complaints.filter(
-c => ["ASSIGNED","IN_PROGRESS"].includes(c.statusType)
+const assigned = complaints.filter(
+c => c.statusType === "ASSIGNED"
+).length
+
+const inProgress = complaints.filter(
+c => c.statusType === "IN_PROGRESS"
 ).length
 
 const resolved = complaints.filter(
@@ -63,47 +69,81 @@ return(
 
 <h1 className="page-title">Customer Dashboard</h1>
 
-{loading && <p>Loading dashboard...</p>}
+{loading && (
+<p style={{marginTop:"20px"}}>
+Loading dashboard...
+</p>
+)}
 
 {!loading && (
 
 <>
 
+{/* STATS */}
+
 <div className="stats-grid">
 
 <div className="stat-card open">
+
 <div className="stat-icon">📂</div>
+
 <h3>Total Complaints</h3>
+
 <p>{complaints.length}</p>
+
 </div>
 
 <div className="stat-card progress">
+
+<div className="stat-icon">📌</div>
+
+<h3>Assigned</h3>
+
+<p>{assigned}</p>
+
+</div>
+
+<div className="stat-card progress">
+
 <div className="stat-icon">⏳</div>
+
 <h3>In Progress</h3>
-<p>{progress}</p>
+
+<p>{inProgress}</p>
+
 </div>
 
 <div className="stat-card resolved">
+
 <div className="stat-icon">✅</div>
+
 <h3>Resolved</h3>
+
 <p>{resolved}</p>
+
 </div>
 
 </div>
+
+{/* DASHBOARD GRID */}
 
 <div className="dashboard-grid">
+
+{/* RECENT COMPLAINTS */}
 
 <div className="chart-section">
 
 <h3>Recent Complaints</h3>
 
-{complaints.length === 0 && (
+{complaints.length === 0 ? (
+
 <p style={{fontSize:"14px",marginTop:"10px"}}>
 No complaints submitted yet
 </p>
-)}
 
-{complaints.slice(0,5).map(c => (
+) : (
+
+complaints.slice(0,5).map(c => (
 
 <div key={c.id} className="activity-item">
 
@@ -111,9 +151,17 @@ No complaints submitted yet
 
 <div>
 
-<b>{c.category}</b>
+<strong>
+#{c.id} {c.category}
+</strong>
 
-<p style={{fontSize:"13px"}}>
+<p style={{fontSize:"13px",color:"#64748b"}}>
+
+{/* URGENCY INDICATOR */}
+
+{c.urgency === "HIGH" && "🔴 "}
+{c.urgency === "MEDIUM" && "🟡 "}
+{c.urgency === "LOW" && "🟢 "}
 
 Status: {c.statusType}
 
@@ -129,9 +177,13 @@ Status: {c.statusType}
 
 </div>
 
-))}
+))
+
+)}
 
 </div>
+
+{/* QUICK TIPS */}
 
 <div className="activity-panel">
 

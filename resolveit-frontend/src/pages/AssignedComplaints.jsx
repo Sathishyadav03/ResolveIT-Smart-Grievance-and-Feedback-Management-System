@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
 import api from "../services/api"
 
-export default function StaffDashboard(){
+export default function AssignedComplaints(){
 
 const [complaints,setComplaints] = useState([])
 
@@ -20,23 +20,11 @@ try{
 
 const res = await api.get("/complaints/staff")
 
-setComplaints(res.data)
+const assigned = res.data.filter(
+c => c.statusType !== "RESOLVED"
+)
 
-}catch(err){
-
-console.log("Failed to load complaints",err)
-
-}
-
-}
-
-const updateStatus = async (id,status) => {
-
-try{
-
-await api.put(`/complaints/update-status/${id}?status=${status}`)
-
-loadComplaints()
+setComplaints(assigned)
 
 }catch(err){
 
@@ -45,16 +33,6 @@ console.log(err)
 }
 
 }
-
-const total = complaints.length
-
-const pending = complaints.filter(
-c => c.statusType !== "RESOLVED"
-).length
-
-const resolved = complaints.filter(
-c => c.statusType === "RESOLVED"
-).length
 
 return(
 
@@ -68,30 +46,7 @@ return(
 
 <div className="content">
 
-<h1 className="page-title">Staff Dashboard</h1>
-
-{/* DASHBOARD CARDS */}
-
-<div className="stats-grid">
-
-<div className="stat-card open">
-<h3>Total Assigned</h3>
-<p>{total}</p>
-</div>
-
-<div className="stat-card progress">
-<h3>Pending</h3>
-<p>{pending}</p>
-</div>
-
-<div className="stat-card resolved">
-<h3>Resolved</h3>
-<p>{resolved}</p>
-</div>
-
-</div>
-
-{/* TABLE */}
+<h1 className="page-title">Assigned Complaints</h1>
 
 <div className="table-container">
 
@@ -106,7 +61,6 @@ return(
 <th>Description</th>
 <th>Urgency</th>
 <th>Status</th>
-<th>Update</th>
 <th>View</th>
 
 </tr>
@@ -118,8 +72,8 @@ return(
 {complaints.length === 0 && (
 
 <tr>
-<td colSpan="7" style={{textAlign:"center"}}>
-No assigned complaints
+<td colSpan="6" style={{textAlign:"center"}}>
+No Assigned Complaints
 </td>
 </tr>
 
@@ -136,42 +90,15 @@ No assigned complaints
 <td>{c.description}</td>
 
 <td>
-
 <span className={`urgency ${c.urgency}`}>
 {c.urgency}
 </span>
-
 </td>
 
 <td>
-
 <span className={`status ${c.statusType}`}>
 {c.statusType}
 </span>
-
-</td>
-
-<td>
-
-<select
-onChange={(e)=>updateStatus(c.id,e.target.value)}
-defaultValue=""
->
-
-<option value="" disabled>
-Update
-</option>
-
-<option value="IN_PROGRESS">
-In Progress
-</option>
-
-<option value="RESOLVED">
-Resolved
-</option>
-
-</select>
-
 </td>
 
 <td>

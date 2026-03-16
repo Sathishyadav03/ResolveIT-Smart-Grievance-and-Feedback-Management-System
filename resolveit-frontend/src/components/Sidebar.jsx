@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom"
+import { FaChartBar, FaClipboardList, FaUsers } from "react-icons/fa"
 
 export default function Sidebar({ role }) {
 
@@ -12,6 +13,8 @@ return (
 </div>
 
 <nav className="sidebar-links">
+
+{/* CUSTOMER */}
 
 {role === "CUSTOMER" && (
 
@@ -31,21 +34,41 @@ return (
 
 )}
 
+{/* STAFF */}
+
 {role === "STAFF" && (
 
 <>
-<NavLink to="/staff-dashboard" className="sidebar-link">
-🛠 Staff Dashboard
+<NavLink to="/staff-dashboard" end className="sidebar-link">
+🛠 Dashboard
+</NavLink>
+
+<NavLink to="/staff-dashboard/assigned" className="sidebar-link">
+📋 Assigned Complaints
+</NavLink>
+
+<NavLink to="/staff-dashboard/resolved" className="sidebar-link">
+✅ Resolved Complaints
 </NavLink>
 </>
 
 )}
 
+{/* ADMIN */}
+
 {role === "ADMIN" && (
 
 <>
-<NavLink to="/admin-dashboard" className="sidebar-link">
-⚙ Admin Dashboard
+<NavLink to="/admin-dashboard" end className="sidebar-link">
+<FaChartBar/> Dashboard
+</NavLink>
+
+<NavLink to="/admin-dashboard/complaints" className="sidebar-link">
+<FaClipboardList/> Complaints
+</NavLink>
+
+<NavLink to="/admin-dashboard/staff" className="sidebar-link">
+<FaUsers/> Staff Management
 </NavLink>
 </>
 

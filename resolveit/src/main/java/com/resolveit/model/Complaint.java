@@ -40,6 +40,14 @@ private String urgency;
 @Column(name="status_type")
 private String statusType;
 
+/* ESCALATION */
+
+@Column(name="escalated")
+private boolean escalated;
+
+@Column(name="escalated_at")
+private LocalDateTime escalatedAt;
+
 /* STAFF ASSIGNMENT */
 
 @Column(name="assigned_staff_id")

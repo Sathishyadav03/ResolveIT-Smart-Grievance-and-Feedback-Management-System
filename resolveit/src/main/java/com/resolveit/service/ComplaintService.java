@@ -103,6 +103,21 @@ return complaintRepository.save(complaint);
 
 }
 
+/* ESCALATE COMPLAINT */
+
+public Complaint escalateComplaint(Long id){
+
+Complaint complaint = complaintRepository.findById(id)
+.orElseThrow(() -> new RuntimeException("Complaint not found"));
+
+complaint.setEscalated(true);
+complaint.setStatusType("ESCALATED");
+complaint.setEscalatedAt(LocalDateTime.now());
+
+return complaintRepository.save(complaint);
+
+}
+
 /* HELPER METHODS */
 
 private void attachStaffNames(List<Complaint> complaints){

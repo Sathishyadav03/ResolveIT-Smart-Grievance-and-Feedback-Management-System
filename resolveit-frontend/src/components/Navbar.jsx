@@ -7,9 +7,16 @@ const navigate = useNavigate()
 const role = localStorage.getItem("role")
 
 const logout = () => {
-    localStorage.clear()
-    navigate("/")
+localStorage.clear()
+navigate("/")
 }
+
+const roleLabel =
+role === "ADMIN"
+? "Admin Dashboard"
+: role === "STAFF"
+? "Staff Dashboard"
+: "Customer"
 
 return(
 
@@ -21,7 +28,7 @@ ResolveIT
 
 <div className="profile">
 
-<span>{role}</span>
+<span>{roleLabel}</span>
 
 <button onClick={logout}>
 Logout

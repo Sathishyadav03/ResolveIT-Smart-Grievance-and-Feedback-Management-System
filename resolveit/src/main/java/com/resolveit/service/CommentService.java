@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import com.resolveit.model.Comment;
+import com.resolveit.model.Complaint;
 import com.resolveit.repository.CommentRepository;
+import com.resolveit.repository.ComplaintRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
 public class CommentService {
 
 private final CommentRepository commentRepository;
+private final ComplaintRepository complaintRepository;
 
 /* ADD COMMENT */
 
@@ -28,7 +31,18 @@ comment.setDescription(desc);
 comment.setStatusType(status);
 comment.setDate(LocalDate.now());
 
-return commentRepository.save(comment);
+Comment savedComment = commentRepository.save(comment);
+
+/* UPDATE COMPLAINT STATUS */
+
+Complaint complaint = complaintRepository.findById(complaintId)
+.orElseThrow(() -> new RuntimeException("Complaint not found"));
+
+complaint.setStatusType(status);
+
+complaintRepository.save(complaint);
+
+return savedComment;
 
 }
 
