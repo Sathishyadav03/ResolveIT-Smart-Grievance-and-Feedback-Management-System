@@ -2,339 +2,324 @@ import { useEffect, useState } from "react"
 import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
 import api from "../services/api"
+import { useLocation } from "react-router-dom"
+
+
 
 export default function AdminComplaints(){
 
-const [complaints,setComplaints] = useState([])
-const [staff,setStaff] = useState([])
-const [selectedStaff,setSelectedStaff] = useState({})
-const [search,setSearch] = useState("")
+  const [complaints,setComplaints] = useState([])
+  const [staff,setStaff] = useState([])
+  const [selectedStaff,setSelectedStaff] = useState({})
+  const [search,setSearch] = useState("")
+
+  const [filters, setFilters] = useState({
+    assignment: "ALL",
+    urgency: "ALL",
+    status: "ALL"
+  })
+
+  useEffect(()=>{
+    loadComplaints()
+    loadStaff()
+  },[])
+const location = useLocation()
+
+useEffect(() => {
+  const params = new URLSearchParams(location.search)
+  const assignment = params.get("assignment")
+
+  if (assignment) {
+    setFilters(prev => ({ ...prev, assignment }))
+  }
+}, [location])
+  const loadComplaints = async ()=>{
+    try{
+      const res = await api.get("/complaints/all")
+      setComplaints(res.data)
+    }catch(err){
+      console.log(err)
+    }
+  }
+
+  const loadStaff = async ()=>{
+    try{
+      const res = await api.get("/users/staff")
+      setStaff(res.data)
+    }catch(err){
+      console.log(err)
+    }
+  }
+
+  const handleStaffChange = (complaintId,value)=>{
+    setSelectedStaff(prev => ({
+      ...prev,
+      [complaintId]:value
+    }))
+  }
+
+  const assignStaff = async (complaintId)=>{
+    const staffId = selectedStaff[complaintId]
+
+    if(!staffId){
+      alert("Select staff first")
+      return
+    }
+
+    try{
+      await api.post("/complaints/assign",null,{
+        params:{complaintId,staffId}
+      })
+
+      loadComplaints()
+    }catch(err){
+      console.log(err)
+    }
+  }
+
+  const escalateComplaint = async (complaintId)=>{
+    if(!window.confirm("Escalate this complaint?")) return
+
+    try{
+      await api.put(`/complaints/escalate/${complaintId}`)
+      loadComplaints()
+    }catch(err){
+      console.log(err)
+    }
+  }
+
+  /* FILTER */
+  const filtered = complaints.filter(c => {
+
+    const matchSearch =
+      c.category?.toLowerCase().includes(search.toLowerCase()) ||
+      c.description?.toLowerCase().includes(search.toLowerCase())
+
+    const matchAssignment =
+      filters.assignment === "ALL" ||
+      (filters.assignment === "ASSIGNED" && c.assignedStaffId) ||
+      (filters.assignment === "UNASSIGNED" && !c.assignedStaffId)
+
+    const matchUrgency =
+      filters.urgency === "ALL" || c.urgency === filters.urgency
+
+    const matchStatus =
+      filters.status === "ALL" || c.statusType === filters.status
+
+    return matchSearch && matchAssignment && matchUrgency && matchStatus
+  })
+
+  const unassigned = filtered.filter(c => !c.assignedStaffId)
+  const assigned = filtered.filter(c => c.assignedStaffId)
+
+  /* 🔥 STATS */
+  const total = complaints.length
+  const assignedCount = complaints.filter(c => c.assignedStaffId).length
+  const unassignedCount = complaints.filter(c => !c.assignedStaffId).length
+  const resolvedCount = complaints.filter(c => c.statusType === "RESOLVED").length
+
+  return(
+    <div>
+
+      <Navbar/>
+
+      <div className="layout">
+
+        <Sidebar role="ADMIN"/>
+
+        <div className="content">
+
+          {/* 🔥 HEADER */}
+          <div className="page-header">
+
+            <div className="page-header-left">
+              <h1 className="page-title">
+                📋 <span className="gradient-text">Admin Complaint Dashboard</span>
+              </h1>
 
-useEffect(()=>{
-loadComplaints()
-loadStaff()
-},[])
+              <p className="page-subtitle">
+                Monitor, assign and control complaint workflow
+              </p>
+            </div>
+
+            <div className="complaint-count">
+              Total: {filtered.length}
+            </div>
 
-/* LOAD COMPLAINTS */
+          </div>
 
-const loadComplaints = async ()=>{
+          {/* 🔥 STATS */}
+          <div className="stats-grid">
 
-try{
+            <div className="stat-card open">
+              <h3>Total</h3>
+              <p>{total}</p>
+            </div>
 
-const res = await api.get("/complaints/all")
-setComplaints(res.data)
+            <div className="stat-card progress">
+              <h3>Assigned</h3>
+              <p>{assignedCount}</p>
+            </div>
 
-}catch(err){
+            <div className="stat-card">
+              <h3>Unassigned</h3>
+              <p>{unassignedCount}</p>
+            </div>
+
+            <div className="stat-card resolved">
+              <h3>Resolved</h3>
+              <p>{resolvedCount}</p>
+            </div>
+
+          </div>
 
-console.log("Error loading complaints",err)
+          {/* SEARCH */}
+          <input
+            className="search-box"
+            placeholder="🔍 Search complaints..."
+            value={search}
+            onChange={(e)=>setSearch(e.target.value)}
+          />
 
-}
+          {/* FILTERS */}
+          <div className="filter-bar">
 
-}
+            <select
+              value={filters.assignment}
+              onChange={(e)=>setFilters({...filters, assignment:e.target.value})}
+            >
+              <option value="ALL">All</option>
+              <option value="UNASSIGNED">Unassigned</option>
+              <option value="ASSIGNED">Assigned</option>
+            </select>
 
-/* LOAD STAFF */
+            <select
+              value={filters.urgency}
+              onChange={(e)=>setFilters({...filters, urgency:e.target.value})}
+            >
+              <option value="ALL">All Urgency</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
 
-const loadStaff = async ()=>{
+            <select
+              value={filters.status}
+              onChange={(e)=>setFilters({...filters, status:e.target.value})}
+            >
+              <option value="ALL">All Status</option>
+              <option value="OPEN">Open</option>
+              <option value="ASSIGNED">Assigned</option>
+              <option value="RESOLVED">Resolved</option>
+            </select>
 
-try{
+          </div>
 
-const res = await api.get("/users/staff")
-setStaff(res.data)
+          <div className="complaints-section">
 
-}catch(err){
+            {/* 🔴 UNASSIGNED */}
+            <h2 className="section-title">
+              🔴 Unassigned ({unassigned.length})
+            </h2>
 
-console.log("Error loading staff",err)
+            {unassigned.map(c => (
+              <div key={c.id} className="complaint-card">
 
-}
+                <div className="complaint-left">
 
-}
+                  <div className="complaint-title">
+                    #{c.id} {c.category}
+                  </div>
 
-/* HANDLE STAFF SELECT */
+                  <p className="complaint-desc">{c.description}</p>
 
-const handleStaffChange = (complaintId,value)=>{
+                  <div className="complaint-meta">
 
-setSelectedStaff(prev => ({
-...prev,
-[complaintId]:value
-}))
+                    <span className={`badge urgency ${c.urgency}`}>
+                      {c.urgency}
+                    </span>
 
-}
+                    <span className={`badge status ${c.statusType}`}>
+                      {c.statusType}
+                    </span>
 
-/* ASSIGN STAFF */
+                  </div>
 
-const assignStaff = async (complaintId)=>{
+                </div>
 
-const staffId = selectedStaff[complaintId]
+                <div className="complaint-right">
 
-if(!staffId){
-alert("Please select staff")
-return
-}
+                  <select
+                    className="staff-select"
+                    value={selectedStaff[c.id] || ""}
+                    onChange={(e)=>handleStaffChange(c.id,e.target.value)}
+                  >
+                    <option value="">Select Staff</option>
+                    {staff.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
 
-try{
+                  <button
+                    className="assign-btn"
+                    onClick={()=>assignStaff(c.id)}
+                  >
+                    Assign
+                  </button>
 
-await api.post("/complaints/assign",null,{
-params:{complaintId,staffId}
-})
+                </div>
 
-loadComplaints()
+              </div>
+            ))}
 
-setSelectedStaff(prev => ({
-...prev,
-[complaintId]:""
-}))
+            {/* 🟢 ASSIGNED */}
+            <h2 className="section-title">
+              👨‍🔧 Assigned ({assigned.length})
+            </h2>
 
-}catch(err){
+            {assigned.map(c => (
 
-console.log("Assignment failed",err)
+              <div key={c.id} className="complaint-card">
 
-}
+                <div className="complaint-left">
 
-}
+                  <div className="complaint-title">
+                    #{c.id} {c.category}
+                  </div>
 
-/* ESCALATE COMPLAINT */
+                  <p className="complaint-desc">{c.description}</p>
 
-const escalateComplaint = async (complaintId)=>{
+                  <p className="staff-info">
+                    👨‍💼 {c.assignedStaffName}
+                  </p>
 
-if(!window.confirm("Escalate this complaint?")) return
+                </div>
 
-try{
+                {c.statusType !== "RESOLVED" && (
+                  <button
+                    className="escalate-btn"
+                    onClick={()=>escalateComplaint(c.id)}
+                  >
+                    🚨 Escalate
+                  </button>
+                )}
 
-await api.put(`/complaints/escalate/${complaintId}`)
+              </div>
 
-loadComplaints()
+            ))}
 
-}catch(err){
+            {filtered.length === 0 && (
+              <div className="empty-state">
+                📭 No complaints found
+              </div>
+            )}
 
-console.log("Escalation failed",err)
+          </div>
 
-}
+        </div>
 
-}
+      </div>
 
-/* FILTER COMPLAINTS */
-
-const filteredComplaints = complaints.filter(c =>
-c.category?.toLowerCase().includes(search.toLowerCase()) ||
-c.description?.toLowerCase().includes(search.toLowerCase()) ||
-c.statusType?.toLowerCase().includes(search.toLowerCase())
-)
-
-/* GROUP COMPLAINTS */
-
-const unassignedComplaints = filteredComplaints.filter(
-c => !c.assignedStaffId
-)
-
-const assignedComplaints = filteredComplaints.filter(
-c => c.assignedStaffId
-)
-
-return(
-
-<div>
-
-<Navbar/>
-
-<div className="layout">
-
-<Sidebar role="ADMIN"/>
-
-<div className="content">
-
-{/* PAGE HEADER */}
-
-<div className="page-header">
-
-<div>
-
-<h1 className="page-title">All Complaints</h1>
-
-<p className="page-subtitle">
-Manage and monitor all submitted complaints
-</p>
-
-</div>
-
-<div className="complaint-count">
-Total: {complaints.length}
-</div>
-
-</div>
-
-{/* SEARCH */}
-
-<input
-className="search-box"
-placeholder="Search complaints..."
-value={search}
-onChange={(e)=>setSearch(e.target.value)}
-/>
-
-<div className="complaints-section">
-
-{/* UNASSIGNED COMPLAINTS */}
-
-{unassignedComplaints.length > 0 && (
-
-<>
-
-<h2 style={{marginTop:"10px",marginBottom:"10px"}}>
-🔴 Unassigned Complaints
-</h2>
-
-{unassignedComplaints.map(c => (
-
-<div key={c.id} className="complaint-card">
-
-<div style={{flex:1}}>
-
-<h3>#{c.id} {c.category}</h3>
-
-<p>{c.description}</p>
-
-<p>
-
-<span className={`urgency ${c.urgency}`}>
-{c.urgency === "HIGH" && "🔴 "}
-{c.urgency === "MEDIUM" && "🟡 "}
-{c.urgency === "LOW" && "🟢 "}
-{c.urgency}
-</span>
-
-<span className={`status ${c.statusType}`} style={{marginLeft:"10px"}}>
-{c.statusType}
-</span>
-
-</p>
-
-<p style={{fontSize:"12px",color:"#64748b"}}>
-Created: {c.createdAt ? new Date(c.createdAt).toLocaleString() : "-"}
-</p>
-
-</div>
-
-<div className="assign-container">
-
-<select
-value={selectedStaff[c.id] || ""}
-onChange={(e)=>handleStaffChange(c.id,e.target.value)}
->
-
-<option value="">Select Staff</option>
-
-{staff.map(s => (
-
-<option key={s.id} value={s.id}>
-{s.name}
-</option>
-
-))}
-
-</select>
-
-<button onClick={()=>assignStaff(c.id)}>
-Assign
-</button>
-
-</div>
-
-</div>
-
-))}
-
-</>
-
-)}
-
-{/* ASSIGNED COMPLAINTS */}
-
-{assignedComplaints.length > 0 && (
-
-<>
-
-<h2 style={{marginTop:"30px",marginBottom:"10px"}}>
-👨‍🔧 Assigned Complaints
-</h2>
-
-{assignedComplaints.map(c => (
-
-<div key={c.id} className="complaint-card">
-
-<div style={{flex:1}}>
-
-<h3>#{c.id} {c.category}</h3>
-
-<p>{c.description}</p>
-
-<p>
-
-<span className={`urgency ${c.urgency}`}>
-{c.urgency === "HIGH" && "🔴 "}
-{c.urgency === "MEDIUM" && "🟡 "}
-{c.urgency === "LOW" && "🟢 "}
-{c.urgency}
-</span>
-
-<span className={`status ${c.statusType}`} style={{marginLeft:"10px"}}>
-{c.statusType}
-</span>
-
-</p>
-
-<p className="staff-info">
-👨‍💼 Assigned to {c.assignedStaffName}
-</p>
-
-<p style={{fontSize:"12px",color:"#64748b"}}>
-Created: {c.createdAt ? new Date(c.createdAt).toLocaleString() : "-"}
-</p>
-
-</div>
-
-{c.statusType !== "RESOLVED" && (
-
-<button
-onClick={()=>escalateComplaint(c.id)}
-style={{
-marginTop:"8px",
-background:"#ef4444",
-color:"white",
-border:"none",
-padding:"6px 12px",
-borderRadius:"6px",
-cursor:"pointer"
-}}
->
-Escalate
-</button>
-
-)}
-
-</div>
-
-))}
-
-</>
-
-)}
-
-{filteredComplaints.length === 0 && (
-
-<div className="empty-state">
-No complaints found
-</div>
-
-)}
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-)
-
+    </div>
+  )
 }

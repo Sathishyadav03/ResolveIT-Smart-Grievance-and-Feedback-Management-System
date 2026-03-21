@@ -1,4 +1,3 @@
-
 package com.resolveit.controller;
 
 import lombok.RequiredArgsConstructor;
@@ -20,10 +19,14 @@ public class UserController {
 
     @GetMapping("/staff")
     public List<User> getAllStaff(){
-
         return userService.getAllStaff();
+    }
 
+    /* ✅ ADD NEW STAFF */
+
+    @PostMapping
+    public User createUser(@RequestBody User user){
+        return userService.saveUser(user);
     }
 
 }
-

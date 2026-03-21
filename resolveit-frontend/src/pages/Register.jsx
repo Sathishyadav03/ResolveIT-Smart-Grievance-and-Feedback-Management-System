@@ -1,98 +1,132 @@
-
-import { useEffect,useState } from "react"
-import Navbar from "../components/Navbar"
-import Sidebar from "../components/Sidebar"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa"
 import api from "../services/api"
-import { Pie } from "react-chartjs-2"
+import "../styles/login.css"   // reuse same UI
 
-export default function Reports(){
+export default function Register(){
 
-const [complaints,setComplaints] = useState([])
+const [name,setName] = useState("")
+const [email,setEmail] = useState("")
+const [password,setPassword] = useState("")
+const [loading,setLoading] = useState(false)
+const [showPassword,setShowPassword] = useState(false)
 
-useEffect(()=>{
-loadComplaints()
-},[])
+const navigate = useNavigate()
 
-const loadComplaints = async ()=>{
+const handleRegister = async(e)=>{
+e.preventDefault()
 
-const res = await api.get("/complaints/all")
+try{
+setLoading(true)
 
-setComplaints(res.data)
+await api.post("/auth/register",{
+name,
+email,
+password
+})
 
+alert("Registration successful ✅")
+
+// redirect to login
+navigate("/")
+
+}catch(err){
+
+console.error(err)
+
+if(err.response?.status === 400){
+alert("User already exists ⚠️")
+}else{
+alert("Registration failed ❌")
 }
 
-/* CALCULATE STATS */
-
-const total = complaints.length
-const open = complaints.filter(c=>c.statusType==="OPEN").length
-const assigned = complaints.filter(c=>c.statusType==="ASSIGNED").length
-const resolved = complaints.filter(c=>c.statusType==="RESOLVED").length
-
-const data={
-labels:["OPEN","ASSIGNED","RESOLVED"],
-datasets:[
-{
-data:[open,assigned,resolved],
-backgroundColor:["#3b82f6","#f59e0b","#10b981"]
+}finally{
+setLoading(false)
 }
-]
 }
 
 return(
 
-<div>
+<div className="login-page">
 
-<Navbar/>
+{/* HEADER */}
+<div className="login-header">
 
-<div className="layout">
+<img src="/logo.png" alt="ResolveIT Logo" className="login-logo"/>
 
-<Sidebar role="ADMIN"/>
 
-<div className="content">
-
-<h1 className="page-title">Reports & Analytics</h1>
-
-{/* STAT CARDS */}
-
-<div className="stats-grid">
-
-<div className="stat-card">
-<h3>Total Complaints</h3>
-<p>{total}</p>
-</div>
-
-<div className="stat-card open">
-<h3>Open</h3>
-<p>{open}</p>
-</div>
-
-<div className="stat-card progress">
-<h3>Assigned</h3>
-<p>{assigned}</p>
-</div>
-
-<div className="stat-card resolved">
-<h3>Resolved</h3>
-<p>{resolved}</p>
-</div>
+<p>🚀 Create your account</p>
 
 </div>
 
-{/* PIE CHART */}
+{/* CARD */}
+<div className="login-card">
 
-<div className="chart-section">
+<h2>Register 🚀</h2>
 
-<Pie data={data}/>
+<form onSubmit={handleRegister}>
+
+{/* NAME */}
+<div className="input-group">
+<FaUser className="input-icon"/>
+<input
+type="text"
+placeholder="Full Name"
+value={name}
+onChange={(e)=>setName(e.target.value)}
+required
+/>
+</div>
+
+{/* EMAIL */}
+<div className="input-group">
+<FaEnvelope className="input-icon"/>
+<input
+type="email"
+placeholder="Email Address"
+value={email}
+onChange={(e)=>setEmail(e.target.value)}
+required
+/>
+</div>
+
+{/* PASSWORD */}
+<div className="input-group">
+<FaLock className="input-icon"/>
+
+<input
+type={showPassword ? "text" : "password"}
+placeholder="Password"
+value={password}
+onChange={(e)=>setPassword(e.target.value)}
+required
+/>
+
+<span
+className="eye-icon"
+onClick={()=>setShowPassword(!showPassword)}
+>
+{showPassword ? <FaEyeSlash/> : <FaEye/>}
+</span>
 
 </div>
 
-</div>
+{/* BUTTON */}
+<button type="submit" disabled={loading}>
+{loading ? "Creating Account..." : "Register"}
+</button>
+
+</form>
+
+<p className="register-text">
+Already have an account?
+<a href="/"> Login</a>
+</p>
 
 </div>
 
 </div>
 
 )
-
 }
-

@@ -20,7 +20,6 @@ import java.util.List;
 @RequestMapping("/api/complaints")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-
 public class ComplaintController {
 
 private final ComplaintService complaintService;
@@ -45,15 +44,12 @@ complaint.setCategory(category);
 complaint.setDescription(description);
 complaint.setUrgency(urgency);
 
-Long userId = Long.parseLong(
+/* GET USER ID FROM JWT */
 
-SecurityContextHolder
-.getContext()
-.getAuthentication()
-.getPrincipal()
-.toString()
-
-);
+Long userId = (Long) SecurityContextHolder
+        .getContext()
+        .getAuthentication()
+        .getPrincipal();
 
 complaint.setUserId(userId);
 
@@ -83,7 +79,7 @@ return complaintService.submitComplaint(complaint);
 
 }
 
-/* GET ALL */
+/* GET ALL COMPLAINTS */
 
 @GetMapping("/all")
 public List<Complaint> getAll(){
@@ -97,15 +93,10 @@ return complaintService.getAllComplaints();
 @GetMapping("/my")
 public List<Complaint> getMy(){
 
-Long userId = Long.parseLong(
-
-SecurityContextHolder
-.getContext()
-.getAuthentication()
-.getPrincipal()
-.toString()
-
-);
+Long userId = (Long) SecurityContextHolder
+        .getContext()
+        .getAuthentication()
+        .getPrincipal();
 
 return complaintService.getComplaintsByUser(userId);
 
@@ -116,21 +107,16 @@ return complaintService.getComplaintsByUser(userId);
 @GetMapping("/staff")
 public List<Complaint> getStaff(){
 
-Long staffId = Long.parseLong(
-
-SecurityContextHolder
-.getContext()
-.getAuthentication()
-.getPrincipal()
-.toString()
-
-);
+Long staffId = (Long) SecurityContextHolder
+        .getContext()
+        .getAuthentication()
+        .getPrincipal();
 
 return complaintService.getComplaintsByStaff(staffId);
 
 }
 
-/* SINGLE */
+/* SINGLE COMPLAINT */
 
 @GetMapping("/{id}")
 public Complaint getById(@PathVariable Long id){

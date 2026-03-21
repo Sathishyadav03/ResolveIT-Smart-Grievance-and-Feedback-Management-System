@@ -1,117 +1,119 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa"
 import api from "../services/api"
 import "../styles/login.css"
 
 export default function Login(){
 
-const [email,setEmail] = useState("")
-const [password,setPassword] = useState("")
-const [loading,setLoading] = useState(false)
+  const [email,setEmail] = useState("")
+  const [password,setPassword] = useState("")
+  const [loading,setLoading] = useState(false)
+  const [showPassword,setShowPassword] = useState(false)
 
-const navigate = useNavigate()
+  const navigate = useNavigate()
 
-const handleLogin = async(e)=>{
+  const handleLogin = async(e)=>{
+    e.preventDefault()
 
-e.preventDefault()
+    try{
+      setLoading(true)
 
-try{
+      const res = await api.post("/auth/login",{ email, password })
 
-setLoading(true)
+      localStorage.setItem("token", res.data.token)
+      localStorage.setItem("role", res.data.role)
 
-const res = await api.post("/auth/login",{
-email,
-password
-})
+      if(res.data.role === "ADMIN"){
+        navigate("/admin-dashboard")
+      }
+      else if(res.data.role === "STAFF"){
+        navigate("/staff-dashboard")
+      }
+      else{
+        navigate("/customer-dashboard")
+      }
 
-/* SAVE TOKEN */
+    }catch(err){
+      console.error(err)
+      alert("Invalid email or password")
+    }
+    finally{
+      setLoading(false)
+    }
+  }
 
-localStorage.setItem("token", res.data.token)
-localStorage.setItem("role", res.data.role)
+  return(
 
-if(res.data.role === "ADMIN"){
-navigate("/admin-dashboard")
-}
-else if(res.data.role === "STAFF"){
-navigate("/staff-dashboard")
-}
-else{
-navigate("/customer-dashboard")
-}
+    <div className="login-page">
 
-}catch(err){
+      {/* HEADER */}
+      <div className="login-header">
+        <img src="/logo.png" alt="ResolveIT Logo" className="login-logo"/>
+       <p className="project-desc">
+  ResolveIT is an intelligent complaint and grievance management platform
+  that enables users to report issues, track progress, and receive timely updates.
+</p>
+      </div>
 
-console.error(err)
-alert("Invalid email or password")
+      {/* CARD */}
+      <div className="login-card">
 
-}
-finally{
-setLoading(false)
-}
+        <h2>Welcome Back 👋</h2>
 
-}
+       <form onSubmit={handleLogin}>
 
-return(
+  {/* EMAIL */}
+  <div className="input-group">
+    <div className="icon-box">
+      <FaEnvelope />
+    </div>
 
-<div className="login-page">
+    <input
+      type="email"
+      placeholder="Email Address"
+      value={email}
+      onChange={(e)=>setEmail(e.target.value)}
+      required
+    />
+  </div>
 
-<div className="login-header">
+  {/* PASSWORD */}
+  <div className="input-group">
+    <div className="icon-box">
+      <FaLock />
+    </div>
 
-<div className="logo-title">
+    <input
+      type={showPassword ? "text" : "password"}
+      placeholder="Password"
+      value={password}
+      onChange={(e)=>setPassword(e.target.value)}
+      required
+    />
 
-<img
-src="/logo.png"
-alt="ResolveIT Logo"
-className="login-logo"
-/>
+    <div
+      className="eye-icon"
+      onClick={()=>setShowPassword(!showPassword)}
+    >
+      {showPassword ? <FaEyeSlash/> : <FaEye/>}
+    </div>
+  </div>
 
-<h1>ResolveIT</h1>
-
-</div>
-
-<p>Smart Complaint & Grievance Management System</p>
-
-</div>
-
-<div className="login-card">
-
-<h2>Login</h2>
-
-<form onSubmit={handleLogin}>
-
-<input
-type="email"
-placeholder="Email Address"
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-required
-/>
-
-<input
-type="password"
-placeholder="Password"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-required
-/>
-
-<button type="submit" disabled={loading}>
-
-{loading ? "Logging in..." : "Login"}
-
-</button>
+  <button type="submit" disabled={loading}>
+    {loading ? "Logging in..." : "Login"}
+  </button>
 
 </form>
 
-<p className="register-text">
-Don't have an account?
-<a href="/register"> Register</a>
-</p>
+        <p className="register-text">
+          Don't have an account?
+          <a href="/register"> Register</a>
+        </p>
 
-</div>
+      </div>
 
-</div>
+    </div>
 
-)
-
+  )
 }

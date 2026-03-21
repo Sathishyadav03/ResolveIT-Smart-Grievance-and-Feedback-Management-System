@@ -4,129 +4,257 @@ import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
 import api from "../services/api"
 
-export default function AssignedComplaints(){
+export default function AssignedComplaints() {
 
-const [complaints,setComplaints] = useState([])
+  const [complaints, setComplaints] = useState([])
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("ALL")
+  const [urgencyFilter, setUrgencyFilter] = useState("ALL")
+  const [dateFilter, setDateFilter] = useState("ALL")
 
-const navigate = useNavigate()
+  const navigate = useNavigate()
 
-useEffect(()=>{
-loadComplaints()
-},[])
+  useEffect(() => {
+    loadComplaints()
+  }, [])
 
-const loadComplaints = async () => {
+  const loadComplaints = async () => {
+    try {
+      const res = await api.get("/complaints/staff")
+      setComplaints(res.data)
+    } catch (err) {
+      console.log(err)
+    }
+  }
 
-try{
+  /* ✅ FILTER LOGIC (FIXED) */
+  const filtered = complaints.filter(c => {
 
-const res = await api.get("/complaints/staff")
+    // SEARCH
+    const matchSearch =
+      c.category?.toLowerCase().includes(search.toLowerCase()) ||
+      c.description?.toLowerCase().includes(search.toLowerCase())
 
-const assigned = res.data.filter(
-c => c.statusType !== "RESOLVED"
-)
+    // STATUS
+    const matchStatus =
+      statusFilter === "ALL" ||
+      c.statusType?.toUpperCase() === statusFilter
 
-setComplaints(assigned)
+    // URGENCY
+    const matchUrgency =
+      urgencyFilter === "ALL" ||
+      c.urgency?.toUpperCase() === urgencyFilter
 
-}catch(err){
+    // DATE FILTER
+    let matchDate = true
 
-console.log(err)
+    if (dateFilter !== "ALL" && c.createdAt) {
 
-}
+      const today = new Date()
+      const complaintDate = new Date(c.createdAt)
 
-}
+      // remove time
+      today.setHours(0,0,0,0)
+      complaintDate.setHours(0,0,0,0)
 
-return(
+      const diffTime = today.getTime() - complaintDate.getTime()
+      const diffDays = diffTime / (1000 * 60 * 60 * 24)
 
-<div>
+      if (dateFilter === "TODAY") {
+        matchDate = diffDays === 0
+      } 
+      else if (dateFilter === "WEEK") {
+        matchDate = diffDays >= 0 && diffDays <= 7
+      } 
+      else if (dateFilter === "MONTH") {
+        matchDate = diffDays >= 0 && diffDays <= 30
+      }
+    }
 
-<Navbar/>
+    // 🔥 IMPORTANT RETURN
+    return matchSearch && matchStatus && matchUrgency && matchDate
+  })
 
-<div className="layout">
+  /* ✅ STATS (FIXED POSITION) */
+  const total = complaints.length
+  const resolvedCount = complaints.filter(c => c.statusType === "RESOLVED").length
+  const inProgress = complaints.filter(c => c.statusType === "IN_PROGRESS").length
+  const escalated = complaints.filter(c => c.statusType === "ESCALATED").length
 
-<Sidebar role="STAFF"/>
+  return (
+    <div>
+      <Navbar />
 
-<div className="content">
+      <div className="layout">
+        <Sidebar role="STAFF" />
 
-<h1 className="page-title">Assigned Complaints</h1>
+        <div className="content">
 
-<div className="table-container">
+          {/* HEADER */}
+          <div className="page-header">
+            <div className="page-header-left">
 
-<table className="table">
+              <h1 className="page-title">
+                <span className="title-icon">📋</span>
+                Assigned Complaints
+              </h1>
 
-<thead>
+              <p className="page-subtitle">
+                Manage all assigned complaints efficiently
+              </p>
 
-<tr>
+              <div className="complaint-count">
+                Total: {total}
+              </div>
 
-<th>ID</th>
-<th>Category</th>
-<th>Description</th>
-<th>Urgency</th>
-<th>Status</th>
-<th>View</th>
+            </div>
+          </div>
 
-</tr>
+          {/* FILTER BAR */}
+          <div className="filter-bar improved-filter">
 
-</thead>
+            <input
+              className="search-input"
+              placeholder="🔍 Search complaints..."
+              value={search}
+              onChange={(e)=>setSearch(e.target.value)}
+            />
 
-<tbody>
+            <select
+              className="filter-select"
+              value={statusFilter}
+              onChange={(e)=>setStatusFilter(e.target.value)}
+            >
+              <option value="ALL">All Status</option>
+              <option value="OPEN">Open</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="ESCALATED">Escalated</option>
+              <option value="RESOLVED">Resolved</option>
+            </select>
 
-{complaints.length === 0 && (
+            <select
+              className="filter-select"
+              value={urgencyFilter}
+              onChange={(e)=>setUrgencyFilter(e.target.value)}
+            >
+              <option value="ALL">All Urgency</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
 
-<tr>
-<td colSpan="6" style={{textAlign:"center"}}>
-No Assigned Complaints
-</td>
-</tr>
+            <select
+              className="filter-select"
+              value={dateFilter}
+              onChange={(e)=>setDateFilter(e.target.value)}
+            >
+              <option value="ALL">All Time</option>
+              <option value="TODAY">Today</option>
+              <option value="WEEK">Last 7 Days</option>
+              <option value="MONTH">Last 30 Days</option>
+            </select>
 
-)}
+          </div>
 
-{complaints.map(c => (
+          {/* STATS */}
+          <div className="assigned-stats">
 
-<tr key={c.id}>
+            <div className="assigned-card blue">
+              <h4>Total</h4>
+              <p>{total}</p>
+            </div>
 
-<td>{c.id}</td>
+            <div className="assigned-card orange">
+              <h4>In Progress</h4>
+              <p>{inProgress}</p>
+            </div>
 
-<td>{c.category}</td>
+            <div className="assigned-card red">
+              <h4>Escalated</h4>
+              <p>{escalated}</p>
+            </div>
 
-<td>{c.description}</td>
+            <div className="assigned-card green">
+              <h4>Resolved</h4>
+              <p>{resolvedCount}</p>
+            </div>
 
-<td>
-<span className={`urgency ${c.urgency}`}>
-{c.urgency}
-</span>
-</td>
+          </div>
 
-<td>
-<span className={`status ${c.statusType}`}>
-{c.statusType}
-</span>
-</td>
+          {/* TABLE */}
+          <div className="table-card">
 
-<td>
+            <table className="modern-table">
 
-<button
-onClick={()=>navigate(`/complaint/${c.id}`)}
->
-View
-</button>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Urgency</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>View</th>
+                </tr>
+              </thead>
 
-</td>
+              <tbody>
 
-</tr>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="empty">
+                      🚫 No matching complaints
+                    </td>
+                  </tr>
+                )}
 
-))}
+                {filtered.map(c => (
 
-</tbody>
+                  <tr key={c.id} className="row-hover">
 
-</table>
+                    <td>{c.id}</td>
+                    <td>{c.category}</td>
+                    <td>{c.description}</td>
 
-</div>
+                    <td>
+                      <span className={`badge urgency ${c.urgency}`}>
+                        {c.urgency}
+                      </span>
+                    </td>
 
-</div>
+                    <td>
+                      <span className={`badge status ${c.statusType}`}>
+                        {c.statusType}
+                      </span>
+                    </td>
 
-</div>
+                    <td>
+                      {c.createdAt
+                        ? new Date(c.createdAt).toLocaleDateString()
+                        : "-"}
+                    </td>
 
-</div>
+                    <td>
+                      <button
+                        className="view-btn"
+                        onClick={() => navigate(`/complaint/${c.id}`)}
+                      >
+                        View
+                      </button>
+                    </td>
 
-)
+                  </tr>
 
+                ))}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { Outlet, useLocation } from "react-router-dom"
+import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { motion } from "framer-motion"
 import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
 import api from "../services/api"
@@ -10,220 +11,208 @@ const [complaints,setComplaints] = useState([])
 const [loading,setLoading] = useState(true)
 
 const location = useLocation()
+const navigate = useNavigate()
 
 useEffect(()=>{
-loadComplaints()
+  loadComplaints()
 },[])
 
-/* LOAD USER COMPLAINTS */
-
 const loadComplaints = async () => {
-
-try{
-
-const res = await api.get("/complaints/my")
-
-setComplaints(res.data)
-
-}catch(err){
-
-console.log("Failed to load complaints",err)
-
-}finally{
-
-setLoading(false)
-
+  try{
+    const res = await api.get("/complaints/my")
+    setComplaints(res.data)
+  }catch(err){
+    console.log(err)
+  }finally{
+    setLoading(false)
+  }
 }
 
-}
+/* COUNTS */
 
-/* STATUS COUNTS */
+const assigned = complaints.filter(c => c.statusType === "ASSIGNED").length
+const inProgress = complaints.filter(c => c.statusType === "IN_PROGRESS").length
+const resolved = complaints.filter(c => c.statusType === "RESOLVED").length
 
-const assigned = complaints.filter(
-c => c.statusType === "ASSIGNED"
-).length
+/* GREETING */
 
-const inProgress = complaints.filter(
-c => c.statusType === "IN_PROGRESS"
-).length
+const name = localStorage.getItem("name") || "User"
+const hour = new Date().getHours()
 
-const resolved = complaints.filter(
-c => c.statusType === "RESOLVED"
-).length
+const greeting =
+  hour < 12 ? "Good Morning ☀️" :
+  hour < 18 ? "Good Afternoon 🌤️" :
+  "Good Evening 🌙"
 
 return(
-
 <div>
 
 <Navbar/>
 
 <div className="layout">
-
 <Sidebar role="CUSTOMER"/>
 
-<div className="content">
+<div className="content premium-bg">
 
 {location.pathname === "/customer-dashboard" && (
 
 <>
+<motion.div
+  initial={{ opacity: 0, y: -20 }}
+  animate={{ opacity: 1, y: 0 }}
+>
+  <h1 className="page-title">
+    {greeting}, {name} 👋
+  </h1>
+  <p className="subtitle">Here’s your complaint activity 🚀</p>
+</motion.div>
 
-<h1 className="page-title">Customer Dashboard</h1>
+{/* QUICK ACTIONS */}
+<div className="quick-actions">
+  <button onClick={()=>navigate("/customer-dashboard/submit-complaint")}>
+    ➕ New Complaint
+  </button>
+
+  <button onClick={()=>navigate("/customer-dashboard/complaint-status")}>
+    📂 View All
+  </button>
+</div>
 
 {loading && (
-<p style={{marginTop:"20px"}}>
-Loading dashboard...
-</p>
+  <p className="loading-text">⏳ Loading dashboard...</p>
 )}
 
 {!loading && (
-
 <>
 
 {/* STATS */}
-
 <div className="stats-grid">
-
-<div className="stat-card open">
-
-<div className="stat-icon">📂</div>
-
-<h3>Total Complaints</h3>
-
-<p>{complaints.length}</p>
-
+  {[
+    {title:"Total", value:complaints.length, icon:"📊"},
+    {title:"Assigned", value:assigned, icon:"📌"},
+    {title:"In Progress", value:inProgress, icon:"⏳"},
+    {title:"Resolved", value:resolved, icon:"✅"}
+  ].map((item,i)=>(
+    
+    <motion.div
+      key={i}
+      className="stat-card neon"
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.1 }}
+      whileHover={{ scale: 1.07 }}
+    >
+      <div className="stat-icon">{item.icon}</div>
+      <h3>{item.title}</h3>
+      <p>{item.value}</p>
+    </motion.div>
+  ))}
 </div>
 
-<div className="stat-card progress">
+{/* PROGRESS */}
+<div className="progress-section">
+  <h3>📈 Resolution Progress</h3>
 
-<div className="stat-icon">📌</div>
+  <div className="progress-bar">
+    <div 
+      className="progress-fill"
+      style={{ width: `${(resolved / complaints.length) * 100 || 0}%` }}
+    ></div>
+  </div>
 
-<h3>Assigned</h3>
-
-<p>{assigned}</p>
-
+  <p>{resolved} / {complaints.length} Resolved</p>
 </div>
 
-<div className="stat-card progress">
-
-<div className="stat-icon">⏳</div>
-
-<h3>In Progress</h3>
-
-<p>{inProgress}</p>
-
-</div>
-
-<div className="stat-card resolved">
-
-<div className="stat-icon">✅</div>
-
-<h3>Resolved</h3>
-
-<p>{resolved}</p>
-
-</div>
-
-</div>
-
-{/* DASHBOARD GRID */}
-
+{/* MAIN GRID */}
 <div className="dashboard-grid">
 
-{/* RECENT COMPLAINTS */}
+  {/* RECENT */}
+  <motion.div 
+    className="card glass premium-card"
+    initial={{ opacity: 0, x: -30 }}
+    animate={{ opacity: 1, x: 0 }}
+  >
 
-<div className="chart-section">
+    <h3>📋 Recent Complaints</h3>
 
-<h3>Recent Complaints</h3>
+    <div className="card-content">
 
-{complaints.length === 0 ? (
+      {complaints.length === 0 ? (
+        <p className="empty-text">No complaints yet 🚀</p>
+      ) : (
+        complaints.slice(0,5).map(c => (
 
-<p style={{fontSize:"14px",marginTop:"10px"}}>
-No complaints submitted yet
-</p>
+          <div key={c.id} className="activity-item modern-item">
 
-) : (
+            <div className={`status-dot ${c.statusType}`}></div>
 
-complaints.slice(0,5).map(c => (
+            <div>
+              <strong>#{c.id} {c.category}</strong>
 
-<div key={c.id} className="activity-item">
+              <p>
+                {c.urgency === "HIGH" && "🔴 "}
+                {c.urgency === "MEDIUM" && "🟡 "}
+                {c.urgency === "LOW" && "🟢 "}
+                {c.statusType}
 
-<div className="activity-dot"></div>
+                {c.assignedStaffName && (
+                  <span> → {c.assignedStaffName}</span>
+                )}
+              </p>
+            </div>
 
-<div>
+          </div>
 
-<strong>
-#{c.id} {c.category}
-</strong>
+        ))
+      )}
 
-<p style={{fontSize:"13px",color:"#64748b"}}>
+    </div>
 
-{/* URGENCY INDICATOR */}
+  </motion.div>
 
-{c.urgency === "HIGH" && "🔴 "}
-{c.urgency === "MEDIUM" && "🟡 "}
-{c.urgency === "LOW" && "🟢 "}
+  {/* SMART */}
+  <motion.div 
+    className="card glass premium-card"
+    initial={{ opacity: 0, x: 30 }}
+    animate={{ opacity: 1, x: 0 }}
+  >
 
-Status: {c.statusType}
+    <h3>🤖 Smart Suggestions</h3>
 
-{c.assignedStaffName && (
-<span style={{marginLeft:"6px"}}>
-→ {c.assignedStaffName}
-</span>
-)}
+    <div className="card-content">
 
-</p>
+      {complaints.length === 0 && (
+        <div className="tip-box">🚀 Start by submitting your first complaint</div>
+      )}
 
-</div>
+      {inProgress > 0 && (
+        <div className="tip-box">⏳ Track ongoing complaints regularly</div>
+      )}
 
-</div>
+      {resolved > 0 && (
+        <div className="tip-box success">✅ You resolved {resolved} complaints</div>
+      )}
 
-))
+      {assigned > 0 && (
+        <div className="tip-box">📌 Assigned complaints will update soon</div>
+      )}
 
-)}
+    </div>
 
-</div>
-
-{/* QUICK TIPS */}
-
-<div className="activity-panel">
-
-<h3>Quick Tips</h3>
-
-<div className="activity-item">
-<div className="activity-dot"></div>
-<p>Submit complaints using the form</p>
-</div>
-
-<div className="activity-item">
-<div className="activity-dot"></div>
-<p>Track complaint progress anytime</p>
-</div>
-
-<div className="activity-item">
-<div className="activity-dot"></div>
-<p>Staff will update complaint status regularly</p>
-</div>
-
-</div>
+  </motion.div>
 
 </div>
 
 </>
-
 )}
 
 </>
-
 )}
 
 <Outlet/>
 
 </div>
-
 </div>
-
 </div>
-
 )
-
 }

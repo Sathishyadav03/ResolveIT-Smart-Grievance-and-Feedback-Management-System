@@ -1,200 +1,185 @@
-import { useEffect,useState } from "react"
+import { useEffect, useState } from "react"
 import api from "../services/api"
-import ComplaintCard from "../components/ComplaintCard"
-import Timeline from "../components/Timeline"
+import { motion, AnimatePresence } from "framer-motion"
 import StatusTracker from "../components/StatusTracker"
 
-export default function ComplaintStatus(){
+export default function ComplaintStatus() {
+
+  const [complaints, setComplaints] = useState([])
+  const [selectedComplaint, setSelectedComplaint] = useState(null)
+  const [comments, setComments] = useState([])
+
+  useEffect(() => {
+    loadComplaints()
+  }, [])
+
+  const loadComplaints = async () => {
+    try {
+      const res = await api.get("/complaints/my")
+      setComplaints(res.data)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const openComplaint = async (complaint) => {
+
+    if (selectedComplaint?.id === complaint.id) {
+      setSelectedComplaint(null)
+      setComments([])
+      return
+    }
+
+    setSelectedComplaint(complaint)
+
+    try {
+      const res = await api.get(`/comments/${complaint.id}`)
+      setComments(res.data)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  /* 🔥 STATS */
+  const total = complaints.length
+  const resolved = complaints.filter(c => c.statusType === "RESOLVED").length
+  const pending = complaints.filter(c => c.statusType !== "RESOLVED").length
+  const escalated = complaints.filter(c => c.statusType === "ESCALATED").length
+
+  return (
 
-const [complaints,setComplaints] = useState([])
-const [selectedComplaint,setSelectedComplaint] = useState(null)
-const [comments,setComments] = useState([])
+    <div className="status-page">
 
-useEffect(()=>{
-loadComplaints()
-},[])
+      {/* HEADER */}
+      <div className="header-section">
+        <h2 className="page-title">
+          📌 <span className="gradient-text">Complaint Status Dashboard</span>
+        </h2>
+        <p className="page-subtitle">
+          Track your complaints and real-time updates 🚀
+        </p>
+      </div>
 
-/* LOAD USER COMPLAINTS */
+      {/* 🔥 STATS */}
+      <div className="status-stats">
 
-const loadComplaints = async ()=>{
+        <div className="status-card blue">
+          <h4>Total</h4>
+          <p>{total}</p>
+        </div>
 
-try{
+        <div className="status-card green">
+          <h4>Resolved</h4>
+          <p>{resolved}</p>
+        </div>
 
-const res = await api.get("/complaints/my")
-setComplaints(res.data)
+        <div className="status-card orange">
+          <h4>Pending</h4>
+          <p>{pending}</p>
+        </div>
 
-}catch(err){
+        <div className="status-card red">
+          <h4>Escalated</h4>
+          <p>{escalated}</p>
+        </div>
 
-console.log(err)
+      </div>
 
-}
+      {/* LIST */}
+      <div className="complaints-list">
 
-}
+        {complaints.length === 0 ? (
+          <div className="empty-state">
+            🚫 No complaints submitted yet
+          </div>
+        ) : (
 
-/* OPEN COMPLAINT DETAILS */
+          complaints.map(c => (
 
-const openComplaint = async (complaint)=>{
+            <div key={c.id}>
 
-setSelectedComplaint(complaint)
+              {/* CARD */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className={`complaint-card modern ${selectedComplaint?.id === c.id ? "active" : ""}`}
+                onClick={() => openComplaint(c)}
+              >
 
-try{
+                <div className="card-left">
+                  <h4>🧾 #{c.id} {c.category}</h4>
+                  <p>{c.description}</p>
+                </div>
 
-const res = await api.get(`/comments/${complaint.id}`)
-setComments(res.data)
+                <div className="card-right">
 
-}catch(err){
+                  <span className={`badge urgency ${c.urgency}`}>
+                    {c.urgency}
+                  </span>
 
-console.log(err)
+                  <span className={`badge status ${c.statusType}`}>
+                    {c.statusType}
+                  </span>
 
-}
+                </div>
 
-}
+              </motion.div>
 
-return(
+              {/* DETAILS */}
+              <AnimatePresence>
 
-<div>
+                {selectedComplaint?.id === c.id && (
 
-<h2 style={{marginBottom:"20px"}}>Complaint Status</h2>
+                  <motion.div
+                    className="details-card"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
 
-{/* COMPLAINT LIST */}
+                    <StatusTracker status={c.statusType} />
 
-<div className="complaints-section">
+                    <div className="timeline-section">
 
-{complaints.length === 0 ?(
+                      <h4>📍 Activity Timeline</h4>
 
-<div className="empty-state">
-No complaints submitted yet
-</div>
+                      {comments.length === 0 ? (
+                        <p>No updates yet</p>
+                      ) : (
 
-):(complaints.map(c => (
+                        comments.map(cm => (
 
-<ComplaintCard
-key={c.id}
-complaint={c}
-onClick={()=>openComplaint(c)}
-/>
+                          <div key={cm.commentId} className="timeline-item">
 
-)))}
+                            <div className="timeline-dot"></div>
 
-</div>
+                            <div>
+                              <b>{cm.statusType}</b>
+                              <p>{cm.description}</p>
+                              <span>{cm.date}</span>
+                            </div>
 
-{/* SELECTED COMPLAINT DETAILS */}
+                          </div>
 
-{selectedComplaint && (
+                        ))
 
-<div className="complaint-details-card">
+                      )}
 
-{/* HEADER */}
+                    </div>
 
-<div className="complaint-header">
+                  </motion.div>
 
-<div>
+                )}
 
-<h3>#{selectedComplaint.id} {selectedComplaint.category}</h3>
+              </AnimatePresence>
 
-<p>{selectedComplaint.description}</p>
+            </div>
 
-</div>
+          ))
 
-<div className="complaint-meta">
+        )}
 
-<span className={`urgency ${selectedComplaint.urgency}`}>
+      </div>
 
-{selectedComplaint.urgency === "HIGH" && "🔴 "}
-{selectedComplaint.urgency === "MEDIUM" && "🟡 "}
-{selectedComplaint.urgency === "LOW" && "🟢 "}
-
-{selectedComplaint.urgency}
-
-</span>
-
-<span className={`status ${selectedComplaint.statusType}`}>
-{selectedComplaint.statusType}
-</span>
-
-</div>
-
-</div>
-
-{/* STAFF ASSIGNMENT */}
-
-<p style={{marginTop:"10px"}}>
-
-<b>Status:</b> {selectedComplaint.statusType}
-
-{selectedComplaint.assignedStaffName && (
-<span style={{marginLeft:"8px"}}>
-→ 👨‍💼 {selectedComplaint.assignedStaffName}
-</span>
-)}
-
-</p>
-
-{/* ATTACHMENT */}
-
-{selectedComplaint.attachment && (
-
-<div style={{marginTop:"10px"}}>
-
-<b>Attachment:</b>
-
-<a
-href={`http://localhost:8080/uploads/${selectedComplaint.attachment}`}
-target="_blank"
-rel="noreferrer"
-style={{marginLeft:"8px"}}
->
-
-View File
-
-</a>
-
-</div>
-
-)}
-
-{/* STATUS TRACKER */}
-
-<StatusTracker status={selectedComplaint.statusType}/>
-
-{/* TIMELINE */}
-
-<Timeline comments={comments}/>
-
-{/* UPDATES */}
-
-<div className="updates-history">
-
-<h3>Complaint Updates</h3>
-
-{comments.length === 0 ?(
-
-<p style={{color:"#64748b"}}>No updates yet</p>
-
-):(comments.map(c => (
-
-<div key={c.commentId} className="update-card">
-
-<div className="update-status">
-{c.statusType}
-</div>
-
-<p>{c.description}</p>
-
-<span>{c.date}</span>
-
-</div>
-
-)))}
-
-</div>
-
-</div>
-
-)}
-
-</div>
-
-)
-
+    </div>
+  )
 }

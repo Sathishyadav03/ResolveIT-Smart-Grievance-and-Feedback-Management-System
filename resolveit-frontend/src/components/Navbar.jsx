@@ -2,42 +2,47 @@ import { useNavigate } from "react-router-dom"
 
 export default function Navbar(){
 
-const navigate = useNavigate()
+  const navigate = useNavigate()
+  const role = localStorage.getItem("role")
 
-const role = localStorage.getItem("role")
+  const logout = () => {
+    localStorage.clear()
+    navigate("/")
+  }
 
-const logout = () => {
-localStorage.clear()
-navigate("/")
-}
+  const roleLabel =
+    role === "ADMIN"
+      ? "Admin Dashboard"
+      : role === "STAFF"
+      ? "Staff Dashboard"
+      : "Customer"
 
-const roleLabel =
-role === "ADMIN"
-? "Admin Dashboard"
-: role === "STAFF"
-? "Staff Dashboard"
-: "Customer"
+  return(
 
-return(
+    <div className="navbar">
 
-<div className="navbar">
+      {/* LEFT SIDE */}
+      <div className="nav-left">
+        <img
+          src="/logo.png"
+          alt="ResolveIT Logo"
+          className="nav-logo"
+        />
+  
+      </div>
 
-<div className="logo">
-ResolveIT
-</div>
+      {/* RIGHT SIDE */}
+      <div className="nav-right">
 
-<div className="profile">
+        <span className="role-text">{roleLabel}</span>
 
-<span>{roleLabel}</span>
+        <button className="logout-btn" onClick={logout}>
+          Logout
+        </button>
 
-<button onClick={logout}>
-Logout
-</button>
+      </div>
 
-</div>
+    </div>
 
-</div>
-
-)
-
+  )
 }

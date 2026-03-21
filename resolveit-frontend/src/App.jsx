@@ -6,14 +6,17 @@ import Register from "./pages/Register"
 import CustomerDashboard from "./pages/CustomerDashboard"
 import SubmitComplaint from "./pages/SubmitComplaint"
 import ComplaintStatus from "./pages/ComplaintStatus"
+import CustomerProfile from "./pages/CustomerProfile"
 
 import AdminDashboard from "./pages/AdminDashboard"
 import AdminComplaints from "./pages/AdminComplaints"
 import StaffManagement from "./pages/StaffManagement"
+import AdminProfile from "./pages/AdminProfile"
 
 import StaffDashboard from "./pages/StaffDashboard"
 import AssignedComplaints from "./pages/AssignedComplaints"
 import ResolvedComplaints from "./pages/ResolvedComplaints"
+import StaffProfile from "./pages/StaffProfile"
 
 import ComplaintDetails from "./pages/ComplaintDetails"
 
@@ -35,6 +38,7 @@ return(
 
 <Route path="submit-complaint" element={<SubmitComplaint/>}/>
 <Route path="complaint-status" element={<ComplaintStatus/>}/>
+<Route path="profile" element={<CustomerProfile/>}/>
 
 </Route>
 
@@ -44,13 +48,14 @@ return(
 <Route path="/admin-dashboard" element={<AdminDashboard/>}/>
 <Route path="/admin-dashboard/complaints" element={<AdminComplaints/>}/>
 <Route path="/admin-dashboard/staff" element={<StaffManagement/>}/>
-
+<Route path="/admin-dashboard/profile" element={<AdminProfile/>}/>
 
 {/* STAFF */}
 
 <Route path="/staff-dashboard" element={<StaffDashboard/>}/>
 <Route path="/staff-dashboard/assigned" element={<AssignedComplaints/>}/>
 <Route path="/staff-dashboard/resolved" element={<ResolvedComplaints/>}/>
+<Route path="/staff-dashboard/profile" element={<StaffProfile/>}/>
 
 
 {/* COMPLAINT DETAILS */}

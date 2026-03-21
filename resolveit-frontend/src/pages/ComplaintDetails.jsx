@@ -6,237 +6,245 @@ import Timeline from "../components/Timeline"
 import StatusTracker from "../components/StatusTracker"
 import api from "../services/api"
 
-export default function ComplaintDetails(){
+export default function ComplaintDetails() {
+
+  const { id } = useParams()
+
+  const [complaint, setComplaint] = useState(null)
+  const [comments, setComments] = useState([])
+  const [description, setDescription] = useState("")
+  const [status, setStatus] = useState("")
+
+  useEffect(() => {
+    loadComplaint()
+    loadComments()
+  }, [id])
+
+  useEffect(() => {
+    if (complaint) {
+      setStatus(complaint.statusType)
+    }
+  }, [complaint])
+
+  const loadComplaint = async () => {
+    try {
+      const res = await api.get(`/complaints/${id}`)
+      setComplaint(res.data)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const loadComments = async () => {
+    try {
+      const res = await api.get(`/comments/${id}`)
+      setComments(res.data)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const addUpdate = async () => {
+
+    if (!status || !description) {
+      alert("Please fill all fields")
+      return
+    }
+
+    try {
+      await api.post("/comments/add", {
+        complaintsId: id,
+        description,
+        statusType: status
+      })
+
+      alert("✅ Update Added Successfully")
+
+      setDescription("")
+      await loadComments()
+      await loadComplaint()
+
+    } catch (err) {
+      console.log(err)
+      alert("❌ Failed to add update")
+    }
+  }
+
+  if (!complaint) {
+    return <p className="loading">⏳ Loading complaint...</p>
+  }
+
+  return (
+    <div>
+      <Navbar />
+
+      <div className="layout">
+        <Sidebar role="STAFF" />
+
+        <div className="content">
+
+          {/* 🔥 HEADER */}
+          <div className="page-header">
+            <div className="page-header-left">
+
+              <h2 className="page-title">
+                📄 <span className="gradient-text">Complaint Details</span>
+              </h2>
+
+              <p className="page-subtitle">
+                Track progress and manage complaint updates efficiently
+              </p>
 
-const { id } = useParams()
+              <div className="complaint-count">
+                Complaint ID: #{complaint.id}
+              </div>
+
+            </div>
+          </div>
+
+          {/* 🔥 MAIN CARD */}
+          <div className="complaint-card fade-in">
+
+            <div className="complaint-top">
 
-const [complaint,setComplaint] = useState(null)
-const [comments,setComments] = useState([])
-const [description,setDescription] = useState("")
-const [status,setStatus] = useState("")
+              <div>
+                <h3 className="complaint-title">
+                  📂 {complaint.category}
+                </h3>
 
-useEffect(()=>{
-loadComplaint()
-loadComments()
-},[id])
+                <p className="complaint-desc">
+                  {complaint.description}
+                </p>
 
-useEffect(()=>{
-if(complaint){
-setStatus(complaint.statusType)
-}
-},[complaint])
+                {/* 🔥 EXTRA INFO */}
+                <p className="complaint-date">
+                  📅 Created: {new Date(complaint.createdAt).toLocaleString()}
+                </p>
 
-const loadComplaint = async () => {
+              </div>
 
-try{
+              <div className="complaint-meta">
 
-const res = await api.get(`/complaints/${id}`)
-setComplaint(res.data)
+                <span className={`badge status ${complaint.statusType}`}>
+                  📌 {complaint.statusType}
+                </span>
 
-}catch(err){
-console.log("Failed to load complaint",err)
-}
+                <span className={`badge urgency ${complaint.urgency}`}>
+                  ⚡ {complaint.urgency}
+                </span>
 
-}
+              </div>
 
-const loadComments = async () => {
+            </div>
 
-try{
+            {/* 🔥 ATTACHMENT */}
+            {complaint.attachment && (
+              <div className="attachment-box">
+                📎 <b>Attachment:</b>{" "}
+                <a
+                  href={`http://localhost:8080/uploads/${complaint.attachment}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View File
+                </a>
+              </div>
+            )}
 
-const res = await api.get(`/comments/${id}`)
-setComments(res.data)
+            {/* 🔥 QUICK ACTIONS */}
+            <div className="quick-actions">
 
-}catch(err){
-console.log("Failed to load comments",err)
-}
+              <button onClick={() => setStatus("IN_PROGRESS")}>
+                🚧 Mark In Progress
+              </button>
 
-}
+              <button onClick={() => setStatus("RESOLVED")}>
+                ✅ Mark Resolved
+              </button>
 
-const addUpdate = async () => {
+            </div>
 
-if(!status || !description){
-alert("Please fill all fields")
-return
-}
+          </div>
 
-try{
+          {/* 🔥 STATUS TRACKER */}
+          <div className="fade-in delay-1">
+            <StatusTracker status={complaint.statusType} />
+          </div>
 
-await api.post("/comments/add",{
-complaintsId: id,
-description: description,
-statusType: status
-})
+          {/* 🔥 TIMELINE */}
+          <div className="fade-in delay-1">
+            <Timeline comments={comments} />
+          </div>
 
-alert("Update Added Successfully")
+          {/* 🔥 UPDATE SECTION */}
+          <div className="updates-layout">
 
-setDescription("")
+            {/* HISTORY */}
+            <div className="updates-history fade-in">
 
-await loadComments()
-await loadComplaint()
+              <h3>🕒 Complaint Updates</h3>
 
-}catch(err){
+              {comments.length === 0 ? (
+                <p className="empty-updates">
+                  🚫 No updates yet
+                </p>
+              ) : (
 
-console.log(err)
-alert("Failed to add update")
+                comments.map(c => (
 
-}
+                  <div key={c.commentId} className="update-card">
 
-}
+                    <div className="update-header">
+                      <span className="update-status">
+                        {c.statusType}
+                      </span>
 
-if(!complaint){
-return <p style={{padding:"40px"}}>Loading complaint...</p>
-}
+                      <span className="update-date">
+                        {new Date(c.date).toLocaleString()}
+                      </span>
+                    </div>
 
-return(
+                    <p>{c.description}</p>
 
-<div>
+                  </div>
 
-<Navbar/>
+                ))
 
-<div className="layout">
+              )}
 
-<Sidebar role="STAFF"/>
+            </div>
 
-<div className="content">
+            {/* FORM */}
+            <div className="form-container fade-in delay-1">
 
-<h2 className="page-title">Complaint Details</h2>
+              <h3>➕ Add Update</h3>
 
-{/* COMPLAINT HEADER */}
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="">Select Status</option>
+                <option value="IN_PROGRESS">🚧 In Progress</option>
+                <option value="ESCALATED">⚠ Escalated</option>
+                <option value="RESOLVED">✅ Resolved</option>
+              </select>
 
-<div className="complaint-details-card">
+              <textarea
+                placeholder="✍️ Write update..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              ></textarea>
 
-<div className="complaint-header">
+              <button onClick={addUpdate}>
+                🚀 Add Update
+              </button>
 
-<div>
+            </div>
 
-<h3>{complaint.category}</h3>
-<p>{complaint.description}</p>
+          </div>
 
-</div>
-
-<div className="complaint-meta">
-
-<span className={`status ${complaint.statusType}`}>
-{complaint.statusType}
-</span>
-
-<span className={`urgency ${complaint.urgency}`}>
-{complaint.urgency}
-</span>
-
-<span className="created-date">
-{new Date(complaint.createdAt).toLocaleDateString()}
-</span>
-
-</div>
-
-</div>
-
-{complaint.attachment && (
-
-<div className="attachment-box">
-
-<b>Attachment:</b>
-
-<a
-href={`http://localhost:8080/uploads/${complaint.attachment}`}
-target="_blank"
-rel="noreferrer"
->
-
-View Attachment
-
-</a>
-
-</div>
-
-)}
-
-</div>
-
-{/* STATUS TRACKER */}
-
-<StatusTracker status={complaint.statusType}/>
-
-{/* TIMELINE */}
-
-<Timeline comments={comments}/>
-
-{/* UPDATE SECTION */}
-
-<div className="updates-layout">
-
-<div className="updates-history">
-
-<h3>Complaint Updates</h3>
-
-{comments.length === 0 ? (
-
-<p className="empty-updates">
-No updates yet
-</p>
-
-):(comments.map(c => (
-
-<div key={c.commentId} className="update-card">
-
-<div className="update-status">
-{c.statusType}
-</div>
-
-<p>{c.description}</p>
-
-<span>{c.date}</span>
-
-</div>
-
-)))}
-
-</div>
-
-{/* ADD UPDATE FORM */}
-
-<div className="form-container">
-
-<h3>Add Update</h3>
-
-<select
-value={status}
-onChange={(e)=>setStatus(e.target.value)}
->
-
-<option value="">Select Status</option>
-
-<option value="IN_PROGRESS">
-In Progress
-</option>
-
-<option value="RESOLVED">
-Resolved
-</option>
-
-</select>
-
-<textarea
-placeholder="Write update..."
-value={description}
-onChange={(e)=>setDescription(e.target.value)}
-></textarea>
-
-<button onClick={addUpdate}>
-Add Update
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-)
-
+        </div>
+      </div>
+    </div>
+  )
 }

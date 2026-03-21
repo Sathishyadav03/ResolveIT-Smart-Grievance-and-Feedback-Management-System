@@ -1,41 +1,58 @@
 export default function StatusTracker({ status }) {
 
-const steps = ["OPEN","ASSIGNED","IN_PROGRESS","RESOLVED"]
+  const steps = [
+    { key: "OPEN", label: "Open", icon: "📝" },
+    { key: "ASSIGNED", label: "Assigned", icon: "📌" },
+    { key: "IN_PROGRESS", label: "In Progress", icon: "🚧" },
+    { key: "RESOLVED", label: "Resolved", icon: "✅" }
+  ]
 
-const currentIndex = steps.indexOf(status)
+  const currentIndex = steps.findIndex(s => s.key === status)
 
-return (
+  // calculate progress %
+  const progress = (currentIndex / (steps.length - 1)) * 100
 
-<div className="tracker-wrapper">
+  return (
 
-{steps.map((step,index)=>{
+    <div className="tracker-container">
 
-const active = index <= currentIndex
+      {/* BACK LINE */}
+      <div className="tracker-line-bg"></div>
 
-return(
+      {/* ACTIVE PROGRESS LINE */}
+      <div 
+        className="tracker-line-progress"
+        style={{ width: `${progress}%` }}
+      ></div>
 
-<div key={step} className="tracker-step">
+      {/* STEPS */}
+      <div className="tracker-wrapper">
 
-<div className={`tracker-circle ${active ? "active" : ""}`}>
-{index+1}
-</div>
+        {steps.map((step, index) => {
 
-<p className={`tracker-label ${active ? "active-label" : ""}`}>
-{step.replace("_"," ")}
-</p>
+          const active = index <= currentIndex
+          const isCurrent = index === currentIndex
 
-{index !== steps.length-1 && (
-<div className={`tracker-line ${index < currentIndex ? "active-line" : ""}`}></div>
-)}
+          return (
+            <div key={step.key} className="tracker-step">
 
-</div>
+              <div className={`tracker-circle 
+                ${active ? "active" : ""} 
+                ${isCurrent ? "current" : ""}`}
+              >
+                {step.icon}
+              </div>
 
-)
+              <p className={`tracker-label ${active ? "active-label" : ""}`}>
+                {step.label}
+              </p>
 
-})}
+            </div>
+          )
+        })}
 
-</div>
+      </div>
 
-)
-
+    </div>
+  )
 }

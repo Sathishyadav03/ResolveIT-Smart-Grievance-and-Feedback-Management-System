@@ -4,133 +4,179 @@ import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
 import api from "../services/api"
 
-export default function ResolvedComplaints(){
+export default function ResolvedComplaints() {
 
-const [complaints,setComplaints] = useState([])
+  const [complaints, setComplaints] = useState([])
+  const [search, setSearch] = useState("")
+  const [urgencyFilter, setUrgencyFilter] = useState("ALL")
 
-const navigate = useNavigate()
+  const navigate = useNavigate()
 
-useEffect(()=>{
-loadComplaints()
-},[])
+  useEffect(() => {
+    loadComplaints()
+  }, [])
 
-const loadComplaints = async () => {
+  const loadComplaints = async () => {
+    try {
+      const res = await api.get("/complaints/staff")
 
-try{
+      const resolved = res.data.filter(
+        c => c.statusType === "RESOLVED"
+      )
 
-const res = await api.get("/complaints/staff")
+      setComplaints(resolved)
 
-const resolved = res.data.filter(
-c => c.statusType === "RESOLVED"
-)
+    } catch (err) {
+      console.log(err)
+    }
+  }
 
-setComplaints(resolved)
+  /* FILTER */
+  const filtered = complaints.filter(c => {
+    const matchSearch = c.category?.toLowerCase().includes(search.toLowerCase())
+    const matchUrgency = urgencyFilter === "ALL" || c.urgency === urgencyFilter
+    return matchSearch && matchUrgency
+  })
 
-}catch(err){
+  return (
+    <div>
+      <Navbar />
+      <div className="layout">
+        <Sidebar role="STAFF" />
 
-console.log(err)
+        <div className="content">
 
-}
+          {/* 🔥 HEADER */}
+          <div className="page-header">
+            <div className="page-header-left">
 
-}
+              <h1 className="page-title">
+                <span className="title-icon">✅</span>
+                Resolved Complaints
+              </h1>
 
-return(
+              <p className="page-subtitle">
+                View and manage all successfully resolved complaints
+              </p>
 
-<div>
+              {/* COUNT */}
+              <div className="complaint-count">
+                Total Resolved: {complaints.length}
+              </div>
 
-<Navbar/>
+            </div>
+          </div>
 
-<div className="layout">
+          {/* 🔥 SEARCH + FILTER */}
+          <div className="filter-bar improved-filter">
 
-<Sidebar role="STAFF"/>
+            <input
+              className="search-input"
+              placeholder="🔍 Search by category..."
+              value={search}
+              onChange={(e)=>setSearch(e.target.value)}
+            />
 
-<div className="content">
+            <select
+              className="filter-select"
+              value={urgencyFilter}
+              onChange={(e)=>setUrgencyFilter(e.target.value)}
+            >
+              <option value="ALL">All Urgency</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
 
-<h1 className="page-title">Resolved Complaints</h1>
+          </div>
 
-<div className="table-container">
+          {/* 🔥 STATS */}
+          <div className="resolved-stats">
 
-<table className="table">
+            <div className="resolved-card green">
+              <h4>Resolved</h4>
+              <p>{complaints.length}</p>
+            </div>
 
-<thead>
+            <div className="resolved-card orange">
+              <h4>High Priority</h4>
+              <p>{complaints.filter(c => c.urgency === "HIGH").length}</p>
+            </div>
 
-<tr>
+            <div className="resolved-card blue">
+              <h4>Medium / Low</h4>
+              <p>{complaints.filter(c => c.urgency !== "HIGH").length}</p>
+            </div>
 
-<th>ID</th>
-<th>Category</th>
-<th>Description</th>
-<th>Urgency</th>
-<th>Status</th>
-<th>View</th>
+          </div>
 
-</tr>
+          {/* TABLE */}
+          <div className="table-card success-card">
 
-</thead>
+            <table className="modern-table">
 
-<tbody>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Urgency</th>
+                  <th>Status</th>
+                  <th>View</th>
+                </tr>
+              </thead>
 
-{complaints.length === 0 && (
+              <tbody>
 
-<tr>
-<td colSpan="6" style={{textAlign:"center"}}>
-No Resolved Complaints
-</td>
-</tr>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="empty">
+                      🚫 No matching results
+                    </td>
+                  </tr>
+                )}
 
-)}
+                {filtered.map(c => (
 
-{complaints.map(c => (
+                  <tr key={c.id} className="row-hover success-row">
 
-<tr key={c.id}>
+                    <td>{c.id}</td>
+                    <td>{c.category}</td>
+                    <td>{c.description}</td>
 
-<td>{c.id}</td>
+                    <td>
+                      <span className={`badge urgency ${c.urgency}`}>
+                        {c.urgency}
+                      </span>
+                    </td>
 
-<td>{c.category}</td>
+                    <td>
+                      <span className="badge resolved">
+                        RESOLVED
+                      </span>
+                    </td>
 
-<td>{c.description}</td>
+                    <td>
+                      <button
+                        className="view-btn success-btn"
+                        onClick={() => navigate(`/complaint/${c.id}`)}
+                      >
+                        View
+                      </button>
+                    </td>
 
-<td>
+                  </tr>
 
-<span className={`urgency ${c.urgency}`}>
-{c.urgency}
-</span>
+                ))}
 
-</td>
+              </tbody>
 
-<td>
+            </table>
 
-<span className={`status ${c.statusType}`}>
-{c.statusType}
-</span>
+          </div>
 
-</td>
-
-<td>
-
-<button
-onClick={()=>navigate(`/complaint/${c.id}`)}
->
-View
-</button>
-
-</td>
-
-</tr>
-
-))}
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-)
-
+        </div>
+      </div>
+    </div>
+  )
 }
