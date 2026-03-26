@@ -2,6 +2,7 @@ package com.resolveit.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import com.resolveit.model.Complaint;
 import com.resolveit.model.User;
@@ -13,139 +14,127 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-
 public class ComplaintService {
 
-private final ComplaintRepository complaintRepository;
-private final UserRepository userRepository;
+    private final ComplaintRepository complaintRepository;
+    private final UserRepository userRepository;
 
-/* SUBMIT COMPLAINT */
+    /* SUBMIT COMPLAINT */
 
-public Complaint submitComplaint(Complaint complaint){
+    public Complaint submitComplaint(Complaint complaint){
+        complaint.setStatusType("OPEN");
+        complaint.setCreatedAt(LocalDateTime.now());
+        return complaintRepository.save(complaint);
+    }
 
-complaint.setStatusType("OPEN");
-complaint.setCreatedAt(LocalDateTime.now());
+    /* GET ALL */
 
-return complaintRepository.save(complaint);
+    public List<Complaint> getAllComplaints(){
+        List<Complaint> complaints = complaintRepository.findAll();
+        attachStaffNames(complaints);
+        return complaints;
+    }
 
-}
+    /* USER */
 
-/* GET ALL COMPLAINTS */
+    public List<Complaint> getComplaintsByUser(Long userId){
+        List<Complaint> complaints = complaintRepository.findByUserId(userId);
+        attachStaffNames(complaints);
+        return complaints;
+    }
 
-public List<Complaint> getAllComplaints(){
+    /* STAFF */
 
-List<Complaint> complaints = complaintRepository.findAll();
+    public List<Complaint> getComplaintsByStaff(Long staffId){
+        List<Complaint> complaints = complaintRepository.findByAssignedStaffId(staffId);
+        attachStaffNames(complaints);
+        return complaints;
+    }
 
-attachStaffNames(complaints);
+    /* SINGLE */
 
-return complaints;
+    public Complaint getComplaintById(Long id){
+        Complaint complaint = complaintRepository.findById(id).orElseThrow();
+        attachStaffName(complaint);
+        return complaint;
+    }
 
-}
+    /* UPDATE STATUS */
 
-/* GET USER COMPLAINTS */
+    public Complaint updateStatus(Long id,String status){
+        Complaint complaint = complaintRepository.findById(id).orElseThrow();
+        complaint.setStatusType(status);
+        return complaintRepository.save(complaint);
+    }
 
-public List<Complaint> getComplaintsByUser(Long userId){
+    /* ASSIGN STAFF */
 
-List<Complaint> complaints = complaintRepository.findByUserId(userId);
+    public Complaint assignComplaint(Long complaintId,Long staffId){
+        Complaint complaint = complaintRepository.findById(complaintId).orElseThrow();
 
-attachStaffNames(complaints);
+        complaint.setAssignedStaffId(staffId);
+        complaint.setStatusType("ASSIGNED");   // ❗ unchanged as you asked
+        complaint.setAssignedAt(LocalDateTime.now());
 
-return complaints;
+        return complaintRepository.save(complaint);
+    }
 
-}
+    /* MANUAL ESCALATE */
 
-/* GET STAFF COMPLAINTS */
+    public Complaint escalateComplaint(Long id){
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-public List<Complaint> getComplaintsByStaff(Long staffId){
+        complaint.setEscalated(true);
+        complaint.setStatusType("ESCALATED");
+        complaint.setEscalatedAt(LocalDateTime.now());
 
-List<Complaint> complaints = complaintRepository.findByAssignedStaffId(staffId);
+        return complaintRepository.save(complaint);
+    }
 
-attachStaffNames(complaints);
+    /* 🔥 AUTO ESCALATION */
 
-return complaints;
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void autoEscalateComplaints(){
 
-}
+        List<Complaint> complaints = complaintRepository.findAll();
+        LocalDateTime now = LocalDateTime.now();
 
-/* GET SINGLE COMPLAINT */
+        for(Complaint c : complaints){
 
-public Complaint getComplaintById(Long id){
+            boolean shouldEscalate =
+                    "ASSIGNED".equals(c.getStatusType()) &&
+                    !c.isEscalated() &&
+                    c.getAssignedAt() != null &&
+                    c.getAssignedAt().plusDays(3).isBefore(now);
 
-Complaint complaint = complaintRepository.findById(id).orElseThrow();
+            if(shouldEscalate){
 
-attachStaffName(complaint);
+                c.setEscalated(true);
+                c.setStatusType("ESCALATED");
+                c.setEscalatedAt(now);
 
-return complaint;
+                complaintRepository.save(c);
 
-}
+                System.out.println("🔥 Auto Escalated Complaint ID: " + c.getId());
+            }
+        }
+    }
 
-/* UPDATE STATUS */
+    /* HELPERS */
 
-public Complaint updateStatus(Long id,String status){
+    private void attachStaffNames(List<Complaint> complaints){
+        for(Complaint c : complaints){
+            attachStaffName(c);
+        }
+    }
 
-Complaint complaint = complaintRepository.findById(id).orElseThrow();
-
-complaint.setStatusType(status);
-
-return complaintRepository.save(complaint);
-
-}
-
-/* ASSIGN STAFF */
-
-public Complaint assignComplaint(Long complaintId,Long staffId){
-
-Complaint complaint = complaintRepository.findById(complaintId).orElseThrow();
-
-complaint.setAssignedStaffId(staffId);
-complaint.setStatusType("ASSIGNED");
-
-return complaintRepository.save(complaint);
-
-}
-
-/* ESCALATE COMPLAINT */
-
-public Complaint escalateComplaint(Long id){
-
-Complaint complaint = complaintRepository.findById(id)
-.orElseThrow(() -> new RuntimeException("Complaint not found"));
-
-complaint.setEscalated(true);
-complaint.setStatusType("ESCALATED");
-complaint.setEscalatedAt(LocalDateTime.now());
-
-return complaintRepository.save(complaint);
-
-}
-
-/* HELPER METHODS */
-
-private void attachStaffNames(List<Complaint> complaints){
-
-for(Complaint c : complaints){
-
-attachStaffName(c);
-
-}
-
-}
-
-private void attachStaffName(Complaint c){
-
-if(c.getAssignedStaffId()!=null){
-
-User staff = userRepository
-.findById(c.getAssignedStaffId())
-.orElse(null);
-
-if(staff!=null){
-
-c.setAssignedStaffName(staff.getName());
-
-}
-
-}
-
-}
-
+    private void attachStaffName(Complaint c){
+        if(c.getAssignedStaffId()!=null){
+            User staff = userRepository.findById(c.getAssignedStaffId()).orElse(null);
+            if(staff!=null){
+                c.setAssignedStaffName(staff.getName());
+            }
+        }
+    }
 }

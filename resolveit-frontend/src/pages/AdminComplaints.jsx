@@ -4,8 +4,6 @@ import Sidebar from "../components/Sidebar"
 import api from "../services/api"
 import { useLocation } from "react-router-dom"
 
-
-
 export default function AdminComplaints(){
 
   const [complaints,setComplaints] = useState([])
@@ -19,20 +17,22 @@ export default function AdminComplaints(){
     status: "ALL"
   })
 
+  const location = useLocation()
+
   useEffect(()=>{
     loadComplaints()
     loadStaff()
   },[])
-const location = useLocation()
 
-useEffect(() => {
-  const params = new URLSearchParams(location.search)
-  const assignment = params.get("assignment")
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const assignment = params.get("assignment")
 
-  if (assignment) {
-    setFilters(prev => ({ ...prev, assignment }))
-  }
-}, [location])
+    if (assignment) {
+      setFilters(prev => ({ ...prev, assignment }))
+    }
+  }, [location])
+
   const loadComplaints = async ()=>{
     try{
       const res = await api.get("/complaints/all")
@@ -70,7 +70,6 @@ useEffect(() => {
       await api.post("/complaints/assign",null,{
         params:{complaintId,staffId}
       })
-
       loadComplaints()
     }catch(err){
       console.log(err)
@@ -88,7 +87,7 @@ useEffect(() => {
     }
   }
 
-  /* FILTER */
+  /* 🔥 FILTER */
   const filtered = complaints.filter(c => {
 
     const matchSearch =
@@ -109,14 +108,21 @@ useEffect(() => {
     return matchSearch && matchAssignment && matchUrgency && matchStatus
   })
 
+  /* 🔥 SEPARATE GROUPS */
   const unassigned = filtered.filter(c => !c.assignedStaffId)
-  const assigned = filtered.filter(c => c.assignedStaffId)
+  const assigned = filtered.filter(
+    c => c.assignedStaffId && c.statusType !== "ESCALATED"
+  )
+  const escalatedComplaints = filtered.filter(
+    c => c.statusType === "ESCALATED"
+  )
 
   /* 🔥 STATS */
   const total = complaints.length
   const assignedCount = complaints.filter(c => c.assignedStaffId).length
   const unassignedCount = complaints.filter(c => !c.assignedStaffId).length
   const resolvedCount = complaints.filter(c => c.statusType === "RESOLVED").length
+  const escalatedCount = complaints.filter(c => c.statusType === "ESCALATED").length
 
   return(
     <div>
@@ -129,7 +135,7 @@ useEffect(() => {
 
         <div className="content">
 
-          {/* 🔥 HEADER */}
+          {/* HEADER */}
           <div className="page-header">
 
             <div className="page-header-left">
@@ -148,7 +154,7 @@ useEffect(() => {
 
           </div>
 
-          {/* 🔥 STATS */}
+          {/* STATS */}
           <div className="stats-grid">
 
             <div className="stat-card open">
@@ -164,6 +170,11 @@ useEffect(() => {
             <div className="stat-card">
               <h3>Unassigned</h3>
               <p>{unassignedCount}</p>
+            </div>
+
+            <div className="stat-card escalated">
+              <h3>Escalated</h3>
+              <p>{escalatedCount}</p>
             </div>
 
             <div className="stat-card resolved">
@@ -210,6 +221,7 @@ useEffect(() => {
               <option value="ALL">All Status</option>
               <option value="OPEN">Open</option>
               <option value="ASSIGNED">Assigned</option>
+              <option value="ESCALATED">Escalated</option>
               <option value="RESOLVED">Resolved</option>
             </select>
 
@@ -217,7 +229,7 @@ useEffect(() => {
 
           <div className="complaints-section">
 
-            {/* 🔴 UNASSIGNED */}
+            {/* UNASSIGNED */}
             <h2 className="section-title">
               🔴 Unassigned ({unassigned.length})
             </h2>
@@ -226,7 +238,6 @@ useEffect(() => {
               <div key={c.id} className="complaint-card">
 
                 <div className="complaint-left">
-
                   <div className="complaint-title">
                     #{c.id} {c.category}
                   </div>
@@ -234,7 +245,6 @@ useEffect(() => {
                   <p className="complaint-desc">{c.description}</p>
 
                   <div className="complaint-meta">
-
                     <span className={`badge urgency ${c.urgency}`}>
                       {c.urgency}
                     </span>
@@ -242,13 +252,10 @@ useEffect(() => {
                     <span className={`badge status ${c.statusType}`}>
                       {c.statusType}
                     </span>
-
                   </div>
-
                 </div>
 
                 <div className="complaint-right">
-
                   <select
                     className="staff-select"
                     value={selectedStaff[c.id] || ""}
@@ -266,23 +273,20 @@ useEffect(() => {
                   >
                     Assign
                   </button>
-
                 </div>
 
               </div>
             ))}
 
-            {/* 🟢 ASSIGNED */}
+            {/* ASSIGNED */}
             <h2 className="section-title">
               👨‍🔧 Assigned ({assigned.length})
             </h2>
 
             {assigned.map(c => (
-
               <div key={c.id} className="complaint-card">
 
                 <div className="complaint-left">
-
                   <div className="complaint-title">
                     #{c.id} {c.category}
                   </div>
@@ -292,7 +296,6 @@ useEffect(() => {
                   <p className="staff-info">
                     👨‍💼 {c.assignedStaffName}
                   </p>
-
                 </div>
 
                 {c.statusType !== "RESOLVED" && (
@@ -305,7 +308,33 @@ useEffect(() => {
                 )}
 
               </div>
+            ))}
 
+            {/* ESCALATED */}
+            <h2 className="section-title">
+              🚨 Escalated ({escalatedComplaints.length})
+            </h2>
+
+            {escalatedComplaints.map(c => (
+              <div key={c.id} className="complaint-card escalated-card">
+
+                <div className="complaint-left">
+                  <div className="complaint-title">
+                    #{c.id} {c.category}
+                  </div>
+
+                  <p className="complaint-desc">{c.description}</p>
+
+                  <p className="staff-info">
+                    👨‍💼 {c.assignedStaffName}
+                  </p>
+
+                  <span className="badge escalated">
+                    🚨 ESCALATED
+                  </span>
+                </div>
+
+              </div>
             ))}
 
             {filtered.length === 0 && (

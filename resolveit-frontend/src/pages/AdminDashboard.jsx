@@ -62,9 +62,12 @@ export default function AdminDashboard(){
   const escalated = complaints.filter(c => c.statusType === "ESCALATED").length
   const highPriority = complaints.filter(c => c.urgency === "HIGH").length
 
+  /* 🔥 UPDATED CHART DATA */
   const chartData = [
     { name:"OPEN", value:open },
     { name:"ASSIGNED", value:assigned },
+    { name:"IN_PROGRESS", value:inProgress },
+    { name:"ESCALATED", value:escalated },
     { name:"RESOLVED", value:resolved }
   ]
 
@@ -114,10 +117,16 @@ export default function AdminDashboard(){
 
           </div>
 
-          {/* ALERT */}
+          {/* 🔥 ALERTS */}
           {highPriority > 0 && (
             <div className="alert-box">
               ⚠ {highPriority} High Priority complaints need attention!
+            </div>
+          )}
+
+          {escalated > 0 && (
+            <div className="alert-box escalated-alert">
+              🚨 {escalated} Escalated complaints require immediate action!
             </div>
           )}
 
@@ -130,6 +139,10 @@ export default function AdminDashboard(){
 
             <button onClick={() => navigate("/admin-dashboard/complaints?assignment=UNASSIGNED")}>
               ⚡ Assign Complaints
+            </button>
+
+            <button onClick={() => navigate("/admin-dashboard/complaints?status=ESCALATED")}>
+              🚨 View Escalated
             </button>
 
             <button onClick={() => navigate("/admin-dashboard/staff")}>
@@ -156,6 +169,14 @@ export default function AdminDashboard(){
               <p>{assigned}</p>
             </div>
 
+            <div 
+              className="stat-card escalated"
+              onClick={()=>navigate("/admin-dashboard/complaints?status=ESCALATED")}
+            >
+              <h3>Escalated</h3>
+              <p>{escalated}</p>
+            </div>
+
             <div className="stat-card resolved">
               <h3>Resolved</h3>
               <p>{resolved}</p>
@@ -163,19 +184,17 @@ export default function AdminDashboard(){
 
           </div>
 
-          {/* 🔥 STATUS ANALYTICS (FINAL) */}
+          {/* STATUS ANALYTICS */}
           <div className="chart-section combined-chart">
 
             <h2 className="chart-title">📊 Status Analytics</h2>
 
             <div className="chart-content">
 
-              {/* CHART */}
               <div className="chart-left">
                 <ComplaintChart data={chartData}/>
               </div>
 
-              {/* OVERVIEW */}
               <div className="chart-overview">
 
                 <h3>📌 Overview</h3>
@@ -190,11 +209,6 @@ export default function AdminDashboard(){
                   <strong>{assigned}</strong>
                 </div>
 
-                <div className="summaryR-item">
-                  <span>Resolved</span>
-                  <strong>{resolved}</strong>
-                </div>
-
                 <div className="summaryP-item">
                   <span>In Progress</span>
                   <strong>{inProgress}</strong>
@@ -203,6 +217,11 @@ export default function AdminDashboard(){
                 <div className="summaryE-item">
                   <span>Escalated</span>
                   <strong>{escalated}</strong>
+                </div>
+
+                <div className="summaryR-item">
+                  <span>Resolved</span>
+                  <strong>{resolved}</strong>
                 </div>
 
               </div>
@@ -229,6 +248,9 @@ export default function AdminDashboard(){
               filteredComplaints.slice(0,5).map(c => (
                 <div key={c.id} className="activity-item">
                   <strong>#{c.id} {c.category}</strong>
+                  {c.statusType === "ESCALATED" && (
+                    <span className="badge escalated"> 🚨 Escalated</span>
+                  )}
                 </div>
               ))
             )}

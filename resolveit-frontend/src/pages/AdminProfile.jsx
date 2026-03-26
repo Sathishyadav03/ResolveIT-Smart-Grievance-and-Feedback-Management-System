@@ -58,16 +58,17 @@ export default function AdminProfile(){
         <div className="content">
 
           {/* HEADER */}
-          <div className="page-header">
-            <h1 className="page-title">
-              👤 <span className="gradient-text">Admin Profile</span>
-              <span className="admin-badge">⚡ Admin</span>
-            </h1>
-            <p className="page-subtitle">
-              Manage your account details, security, and system access
-            </p>
-          </div>
-
+         <div className="page-header">
+  <div className="page-header-left">
+    <h1 className="page-title">
+      👤 <span className="gradient-text">Admin Profile</span>
+      <span className="admin-badge">⚡ Admin</span>
+    </h1>
+    <p className="page-subtitle">
+      Manage your account details, security, and system access
+    </p>
+  </div>
+</div>
           {/* STATS */}
           <div className="profile-stats">
             <div className="stat-card">
@@ -186,9 +187,18 @@ export default function AdminProfile(){
               )}
 
             </div>
+             <div className="activity-panel">
+       
 
+       <div className="activity-item">📊 Viewed analytics</div>
+
+
+<div className="activity-item">📌 Assigned complaint</div>
+<div className="activity-item">✔ Resolved complaint</div>
+<div className="activity-item">⚠️ Escalated issue</div>
+<div className="activity-item">👥 Managed staff</div>
+     </div>
           </div>
-
         </div>
 
       </div>

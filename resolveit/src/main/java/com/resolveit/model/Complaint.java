@@ -15,57 +15,59 @@ import java.time.LocalDateTime;
 
 public class Complaint {
 
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-/* USER DETAILS */
+    /* USER DETAILS */
 
-private boolean anonymous;
+    private boolean anonymous;
 
-@Column(name="user_id")
-private Long userId;
+    @Column(name="user_id")
+    private Long userId;
 
-/* COMPLAINT DETAILS */
+    /* COMPLAINT DETAILS */
 
-private String category;
+    private String category;
 
-@Column(length = 2000)
-private String description;
+    @Column(length = 2000)
+    private String description;
 
-private String urgency;
+    private String urgency;
 
-/* STATUS */
+    /* STATUS */
 
-@Column(name="status_type")
-private String statusType;
+    @Column(name="status_type")
+    private String statusType;
 
-/* ESCALATION */
+    /* ESCALATION */
 
-@Column(name="escalated")
-private boolean escalated;
+    @Column(name="escalated")
+    private boolean escalated;
 
-@Column(name="escalated_at")
-private LocalDateTime escalatedAt;
+    @Column(name="escalated_at")
+    private LocalDateTime escalatedAt;
 
-/* STAFF ASSIGNMENT */
+    /* STAFF ASSIGNMENT */
 
-@Column(name="assigned_staff_id")
-private Long assignedStaffId;
+    @Column(name="assigned_staff_id")
+    private Long assignedStaffId;
 
-/* STAFF NAME (NOT STORED IN DB) */
+    @Column(name="assigned_at")   // ✅ NEW FIELD
+    private LocalDateTime assignedAt;
 
-@Transient
-private String assignedStaffName;
+    /* STAFF NAME (NOT STORED IN DB) */
 
-/* FILE ATTACHMENT */
+    @Transient
+    private String assignedStaffName;
 
-@Column(name="attachment")
-private String attachment;
+    /* FILE ATTACHMENT */
 
-/* CREATED TIME */
+    @Column(name="attachment")
+    private String attachment;
 
-@Column(name="created_at")
-private LocalDateTime createdAt;
+    /* CREATED TIME */
 
+    @Column(name="created_at")
+    private LocalDateTime createdAt;
 }

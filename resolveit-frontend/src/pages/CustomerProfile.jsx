@@ -68,15 +68,17 @@ export default function CustomerProfile(){
     <div className="content">
 
       {/* HEADER */}
-      <div className="page-header">
-        <h1 className="page-title">
-          👤 <span className="gradient-text">Customer Profile</span>
-          <span className="customer-badge">🧑 Customer</span>
-        </h1>
-        <p className="page-subtitle">
-          Manage your account details securely
-        </p>
-      </div>
+     <div className="page-header">
+  <div className="page-header-left">
+    <h1 className="page-title">
+      👤 <span className="gradient-text">Customer Profile</span>
+      <span className="customer-badge">🧑 Customer</span>
+    </h1>
+    <p className="page-subtitle">
+      Manage your account details securely
+    </p>
+  </div>
+</div>
 
       <div className="profile-container">
 
@@ -182,6 +184,20 @@ export default function CustomerProfile(){
           </div>
         )}
 
+      </div>
+        {/* 🔥 ACTIVITY SECTION */}
+      <div className="activity-panel">
+       
+
+       <div className="activity-item">📝 Raised complaint #23 about service issue</div>
+
+<div className="activity-item">✔ Complaint #18 marked as resolved</div>
+
+<div className="activity-item">⏳ Complaint #25 is being processed</div>
+
+<div className="activity-item">📌 12 total complaints submitted</div>
+
+<div className="activity-item">📅 Joined in January 2026</div>
       </div>
 
       {/* ✏️ EDIT MODAL */}
